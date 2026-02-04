@@ -1,0 +1,17 @@
+generated: "2026-02-04"
+project: "jobato"
+project_type: "BMad Method"
+selected_track: "method"
+field_type: "greenfield"
+workflow_path: "/Users/pedro/Dev/jobato/_bmad/bmm/workflows/workflow-status/paths/method-greenfield.yaml"
+workflow_status:
+  brainstorm-project: optional
+  research: skipped
+  product-brief: optional
+  prd: required
+  create-ux-design: conditional
+  create-architecture: required
+  create-epics-and-stories: required
+  test-design: optional
+  implementation-readiness: required
+  sprint-planning: required
