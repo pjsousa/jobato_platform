@@ -9,7 +9,8 @@ workflow_status:
   research: skipped
   product-brief: "/Users/pedro/Dev/jobato/_bmad-output/planning-artifacts/product-brief-jobato-2026-02-05.md"
   product-brief-completed-at: "2026-02-05"
-  prd: required
+  prd: "/Users/pedro/Dev/jobato/_bmad-output/planning-artifacts/prd.md"
+  prd-completed-at: "2026-02-05"
   create-ux-design: conditional
   create-architecture: required
   create-epics-and-stories: required
