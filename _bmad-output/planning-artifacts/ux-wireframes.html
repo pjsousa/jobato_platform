@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Jobato Wireframes</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap");
+
+      :root {
+        --bg: #f6f4ef;
+        --panel: #ffffff;
+        --ink: #1c1a17;
+        --muted: #6b645c;
+        --line: #d9d2c7;
+        --accent: #2f5e4e;
+        --shadow: 0 28px 60px -40px rgba(25, 22, 18, 0.45);
+        --radius-lg: 18px;
+        --radius-md: 12px;
+        --space-1: 4px;
+        --space-2: 8px;
+        --space-3: 12px;
+        --space-4: 16px;
+        --space-5: 20px;
+        --space-6: 24px;
+        --space-7: 32px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Space Grotesk", sans-serif;
+        color: var(--ink);
+        background: radial-gradient(circle at top, #fbfaf8 0%, #f2ede6 45%, #e9e1d7 100%);
+      }
+
+      header {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px 24px 16px;
+      }
+
+      header h1 {
+        margin: 0 0 8px;
+        font-size: 28px;
+        letter-spacing: -0.02em;
+      }
+
+      header p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .grid {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 16px 24px 64px;
+        display: grid;
+        gap: 28px;
+      }
+
+      .wireframe {
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        padding: 20px;
+        box-shadow: var(--shadow);
+      }
+
+      .wireframe h2 {
+        margin: 0 0 12px;
+        font-size: 18px;
+      }
+
+      .frame {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+      }
+
+      .frame-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .tabs {
+        display: flex;
+        gap: 8px;
+      }
+
+      .tab {
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .tab.active {
+        background: var(--accent);
+        color: #ffffff;
+        border-color: transparent;
+      }
+
+      .meta-bar {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .summary {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .summary-box {
+        border: 1px dashed var(--line);
+        border-radius: var(--radius-md);
+        padding: 8px 10px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+      }
+
+      .list-panel {
+        border-right: 1px solid var(--line);
+        padding: 14px;
+      }
+
+      .list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .list-item {
+        border: 1px dashed var(--line);
+        border-radius: var(--radius-md);
+        padding: 10px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .list-item.active {
+        border: 1px solid var(--accent);
+        box-shadow: inset 0 0 0 1px var(--accent);
+      }
+
+      .card-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: auto;
+      }
+
+      .label {
+        padding: 2px 8px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+      }
+
+      .label.fit {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      .state-pill {
+        padding: 2px 8px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-size: 10px;
+      }
+
+      .state-pill.relevant {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: rgba(47, 94, 78, 0.08);
+      }
+
+      .state-pill.irrelevant {
+        border-color: #b35a4a;
+        color: #b35a4a;
+        background: rgba(179, 90, 74, 0.08);
+      }
+
+
+      .detail-panel {
+        padding: 18px 20px 22px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+      }
+
+      .detail-title {
+        font-size: 20px;
+        margin: 0 0 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border-radius: 999px;
+      }
+
+      .detail-title.relevant {
+        background: rgba(47, 94, 78, 0.12);
+        color: var(--accent);
+      }
+
+      .detail-title.irrelevant {
+        background: rgba(179, 90, 74, 0.12);
+        color: #b35a4a;
+      }
+
+
+      .detail-meta {
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 16px;
+      }
+
+      .detail-body {
+        border: 1px dashed var(--line);
+        border-radius: var(--radius-md);
+        padding: 14px;
+        font-size: 12px;
+        color: var(--muted);
+        min-height: 90px;
+      }
+
+      .hint {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 8px;
+      }
+
+      .detail-footer {
+        margin-top: 18px;
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .footer-score {
+        border: 1px dashed var(--line);
+        padding: 4px 8px;
+        border-radius: 999px;
+      }
+
+      .empty-panel {
+        padding: 24px;
+        text-align: center;
+        color: var(--muted);
+      }
+
+      .empty-card {
+        border: 1px dashed var(--line);
+        border-radius: var(--radius-md);
+        padding: 24px;
+        max-width: 420px;
+        margin: 0 auto;
+      }
+
+      @media (max-width: 980px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+        .list-panel {
+          border-right: none;
+          border-bottom: 1px solid var(--line);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Jobato wireframes</h1>
+      <p>Low-fidelity layouts for the split triage experience.</p>
+    </header>
+
+    <main class="grid">
+      <section class="wireframe">
+        <h2>Wireframe 1: Today review (split triage)</h2>
+        <div class="frame">
+          <div class="frame-header">
+            <div class="tabs">
+              <span class="tab active">Today</span>
+              <span class="tab">All Time</span>
+            </div>
+            <div class="meta-bar">Hide irrelevant: On</div>
+          </div>
+          <div class="summary">
+            <div class="summary-box">New today: 12</div>
+            <div class="summary-box">Relevant: 7</div>
+            <div class="summary-box">Run: 22:10</div>
+          </div>
+          <div class="layout">
+            <aside class="list-panel">
+              <div class="list">
+                <div class="list-item active">
+                  <div>Lead Python Engineer</div>
+                  <div class="detail-meta">Helio Labs · Remote · 2d</div>
+                  <div class="card-footer">
+                    <span class="label fit">Top fit</span>
+                    <span class="state-pill relevant">Relevant</span>
+                  </div>
+                </div>
+                <div class="list-item">
+                  <div>Staff Backend Engineer</div>
+                  <div class="detail-meta">Nordic Tools · Hybrid · 1d</div>
+                  <div class="card-footer">
+                    <span class="label">Strong</span>
+                  </div>
+                </div>
+                <div class="list-item">
+                  <div>Engineering Manager</div>
+                  <div class="detail-meta">Cicero · Remote · 3d</div>
+                  <div class="card-footer">
+                    <span class="label">Low</span>
+                    <span class="state-pill irrelevant">Irrelevant</span>
+                  </div>
+                </div>
+              </div>
+            </aside>
+            <section class="detail-panel">
+              <h3 class="detail-title relevant">Lead Python Engineer</h3>
+              <div class="detail-meta">Helio Labs · Remote · Posted 2 days ago</div>
+              <div class="detail-body">Job snippet area (summary, requirements, highlights).</div>
+              <div class="hint">Click the title to cycle: Relevant -> Irrelevant -> None.</div>
+              <div class="detail-footer">
+                <span class="footer-score">Score: 0.92</span>
+                <span>Quota left: 38</span>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <section class="wireframe">
+        <h2>Wireframe 2: All Time (same layout, broader list)</h2>
+        <div class="frame">
+          <div class="frame-header">
+            <div class="tabs">
+              <span class="tab">Today</span>
+              <span class="tab active">All Time</span>
+            </div>
+            <div class="meta-bar">Show irrelevant: Off</div>
+          </div>
+          <div class="summary">
+            <div class="summary-box">Total: 286</div>
+            <div class="summary-box">Relevant: 103</div>
+            <div class="summary-box">Duplicates: 41</div>
+          </div>
+          <div class="layout">
+            <aside class="list-panel">
+              <div class="list">
+                <div class="list-item active">
+                  <div>Principal Platform Engineer</div>
+                  <div class="detail-meta">Orion Cloud · Remote · 4d</div>
+                  <div class="card-footer">
+                    <span>
+                      <span class="label fit">Top fit</span>
+                      <span class="label">Dup 2</span>
+                    </span>
+                    <span class="state-pill irrelevant">Irrelevant</span>
+                  </div>
+                </div>
+                <div class="list-item">
+                  <div>Senior Backend Engineer</div>
+                  <div class="detail-meta">Atlas Systems · Remote · 7d</div>
+                  <div class="card-footer">
+                    <span class="label">Strong</span>
+                    <span class="state-pill relevant">Relevant</span>
+                  </div>
+                </div>
+                <div class="list-item">
+                  <div>Engineering Manager</div>
+                  <div class="detail-meta">Bridge Labs · Hybrid · 9d</div>
+                  <div class="card-footer">
+                    <span class="label">Low</span>
+                  </div>
+                </div>
+              </div>
+            </aside>
+            <section class="detail-panel">
+              <h3 class="detail-title irrelevant">Principal Platform Engineer</h3>
+              <div class="detail-meta">Orion Cloud · Remote · Posted 4 days ago</div>
+              <div class="detail-body">Job snippet area with expanded context and links.</div>
+              <div class="hint">Click the title to cycle: Relevant -> Irrelevant -> None.</div>
+              <div class="detail-footer">
+                <span class="footer-score">Score: 0.78</span>
+                <span>Last labeled: 2d ago</span>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <section class="wireframe">
+        <h2>Wireframe 3: Today empty state</h2>
+        <div class="frame">
+          <div class="frame-header">
+            <div class="tabs">
+              <span class="tab active">Today</span>
+              <span class="tab">All Time</span>
+            </div>
+            <div class="meta-bar">Hide irrelevant: On</div>
+          </div>
+          <div class="empty-panel">
+            <div class="empty-card">
+              <strong>No new jobs today</strong>
+              <p>Last run finished at 22:10. Check back tomorrow or run a new search.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

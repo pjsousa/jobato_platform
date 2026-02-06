@@ -183,8 +183,8 @@ Established patterns with a familiar twist: ranked list + quick decision actions
 
 1. **Open:** User lands on Today view with the highest-ranked job selected by default.
 2. **Scan:** Left panel shows a relevance-sorted list; active job is highlighted.
-3. **Decide:** User clicks a single CTA to mark Relevant / Irrelevant / Reset.
-4. **Feedback:** Score/label updates immediately and the list reorders or marks state.
+3. **Decide:** User clicks the job title to cycle state: Relevant -> Irrelevant -> None.
+4. **Feedback:** Title background and list pill update immediately; list ordering/labels refresh if needed.
 5. **Continue:** User moves down the list, repeating the quick decision flow.
 
 ## Visual Design Foundation
@@ -250,7 +250,9 @@ Six directions explored in `ux-design-directions.html` using Theme A (Sandstone 
 - Two-pane layout: left list + right detail panel.
 - Ranked list shows labels only ("Top fit", "Strong"), no numeric score in the list.
 - Numeric score appears only in the detail footer (with run status metadata).
-- Replace multi-button CTA with a single tri-state action control (Relevant / Irrelevant / Reset) with one clear active state and one-click state changes.
+- Use the job title as the state toggle (click to cycle Relevant -> Irrelevant -> None).
+- Show state pills only for Relevant/Irrelevant; no pill for None.
+- Sync title background color with the list state pill.
 - Keep irrelevant toggle and run summary visible but secondary.
 
 ## User Journey Flows
@@ -269,7 +271,7 @@ flowchart TD
   F --> G{Decision?}
   G -- Relevant --> H[Set label: Relevant]
   G -- Irrelevant --> I[Set label: Irrelevant]
-  G -- Reset --> J[Set label: Reset]
+  G -- None --> J[Clear manual label]
   H --> K[Update list labels + ordering]
   I --> K
   J --> K
@@ -278,17 +280,17 @@ flowchart TD
   L -- No --> M[Review complete]
 ```
 
-### Journey 2: Labeling / Feedback Loop (Tri-state control)
+### Journey 2: Labeling / Feedback Loop (Title toggle)
 
 **Goal:** One-click feedback that updates the model state and list.
 
 ```mermaid
 flowchart TD
-  A[User clicks tri-state control] --> B{Selected state}
+  A[User clicks title] --> B{Next state}
   B -- Relevant --> C[Apply label: Relevant]
   B -- Irrelevant --> D[Apply label: Irrelevant]
-  B -- Reset --> E[Clear manual label]
-  C --> F[Update list label + detail footer score]
+  B -- None --> E[Clear manual label]
+  C --> F[Update title background + list state pill]
   D --> F
   E --> F
   F --> G[Persist feedback]
@@ -298,14 +300,14 @@ flowchart TD
 ### Journey Patterns
 
 - Default focus on top-ranked job with list highlight.
-- Single tri-state feedback control with one active state.
-- List shows labels only ("Top fit", "Strong"), numeric score appears in detail footer.
-- Immediate feedback updates list labels and ordering.
+- Title click cycles state (Relevant -> Irrelevant -> None).
+- List shows rank labels ("Top fit", "Strong") and state pills only when labeled.
+- Immediate feedback updates title background, list pills, and ordering.
 
 ### Flow Optimization Principles
 
 - Reduce steps to value: open -> decide -> next.
-- Keep feedback frictionless: one control, immediate state update.
+- Keep feedback frictionless: one click on title, immediate state update.
 - Maintain momentum: always keep a focused item in view.
 - Avoid cognitive overload: hide numeric scores in list; emphasize labels.
 
@@ -329,8 +331,8 @@ Use the themeable system for foundation components:
 
 **Purpose:** Fast scanning of ranked jobs.
 **Usage:** Left list in Today/All Time.
-**Anatomy:** Rank label (Top fit/Strong/Low), title, company/meta line, optional duplicate badge.
-**States:** default, active/selected, de-emphasized (irrelevant).
+**Anatomy:** Rank label (Top fit/Strong/Low), title, company/meta line, optional duplicate badge, state pill (Relevant/Irrelevant when set).
+**States:** default (no state pill), active/selected, relevant, irrelevant (de-emphasized).
 **Variants:** compact (optional).
 **Accessibility:** list item as button with `aria-selected`, keyboard focus ring.
 
@@ -338,17 +340,9 @@ Use the themeable system for foundation components:
 
 **Purpose:** Provide context and decision surface for selected job.
 **Usage:** Right panel, always shows selected item.
-**Anatomy:** header (title + company), metadata row, snippet, footer with score + run status.
-**States:** loading skeleton, populated.
+**Anatomy:** header (stateful title + company), metadata row, snippet, footer with score + run status.
+**States:** loading skeleton, populated, relevant, irrelevant, none.
 **Accessibility:** heading structure + landmark region.
-
-#### Tri-State Feedback Control
-
-**Purpose:** Single decision control (Relevant / Irrelevant / Reset).
-**Usage:** Primary action in detail panel.
-**Anatomy:** segmented control with one active state.
-**States:** default, active selection, disabled while saving.
-**Accessibility:** keyboard navigable segmented group with `aria-pressed` states.
 
 #### Run Summary Bar
 
@@ -357,11 +351,17 @@ Use the themeable system for foundation components:
 **Anatomy:** last run time, new count, relevant count, quota remaining.
 **States:** default, stale (optional).
 
-#### Relevance Label Badge
+#### Rank Label Badge
 
 **Purpose:** Communicate fit quickly without numeric scores.
 **Usage:** list items and headers.
 **States:** Top fit, Strong, Low (de-emphasized).
+
+#### State Pill (Relevant/Irrelevant)
+
+**Purpose:** Show manual label status on list items.
+**Usage:** bottom-right of list cards when labeled.
+**States:** Relevant, Irrelevant (hidden when None).
 
 #### Empty State Card
 
@@ -378,7 +378,7 @@ Use the themeable system for foundation components:
 
 - Build custom components using design system tokens for spacing, color, and typography.
 - Keep states minimal and consistent (loading, active, disabled).
-- Ensure tri-state control and list items are fully keyboard accessible.
+- Ensure title toggle and list items are fully keyboard accessible.
 
 ### Implementation Roadmap
 
@@ -386,7 +386,7 @@ Use the themeable system for foundation components:
 
 - Job List Item
 - Job Detail Panel
-- Tri-State Feedback Control
+- Title State Toggle (within detail header)
 - Run Summary Bar
 - Irrelevant Toggle (from design system)
 - Empty State Card
@@ -401,7 +401,7 @@ Use the themeable system for foundation components:
 
 ### Button Hierarchy
 
-- Primary action: tri-state feedback control (Relevant / Irrelevant / Reset).
+- Primary action: click title to cycle state (Relevant -> Irrelevant -> None).
 - Secondary actions: "Open source link" text button in detail footer; tabs for Today/All Time.
 - Tertiary: toggle for show/hide irrelevant.
 
@@ -446,7 +446,7 @@ Use the themeable system for foundation components:
 ### Accessibility Strategy
 
 - Target WCAG AA compliance.
-- Full keyboard navigation for list selection and tri-state control.
+- Full keyboard navigation for list selection and title toggle.
 - Visible focus indicators on interactive elements.
 - Minimum 4.5:1 contrast for text and key UI states.
 
@@ -461,4 +461,4 @@ Use the themeable system for foundation components:
 - Use CSS grid for split layout and stacking behavior.
 - Keep hit targets >= 44px for actions.
 - Ensure list rows are focusable with aria-selected.
-- Keep the tri-state control navigable with arrow keys and enter/space.
+- Make the title toggle focusable and triggerable with enter/space.
