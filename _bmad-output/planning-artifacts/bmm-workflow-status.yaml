@@ -13,7 +13,7 @@ workflow_status:
   prd-completed-at: "2026-02-05"
   create-ux-design: "/Users/pedro/Dev/jobato/_bmad-output/planning-artifacts/ux-design-specification.md"
   create-ux-design-completed-at: "2026-02-05"
-  create-architecture: required
+  create-architecture: "/Users/pedro/Dev/jobato/_bmad-output/planning-artifacts/architecture.md"
   create-epics-and-stories: required
   test-design: optional
   implementation-readiness: required
