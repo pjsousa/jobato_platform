@@ -11,7 +11,8 @@ workflow_status:
   product-brief-completed-at: "2026-02-05"
   prd: "/Users/pedro/Dev/jobato/_bmad-output/planning-artifacts/prd.md"
   prd-completed-at: "2026-02-05"
-  create-ux-design: conditional
+  create-ux-design: "/Users/pedro/Dev/jobato/_bmad-output/planning-artifacts/ux-design-specification.md"
+  create-ux-design-completed-at: "2026-02-05"
   create-architecture: required
   create-epics-and-stories: required
   test-design: optional

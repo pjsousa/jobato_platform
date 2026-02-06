@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Jobato Theme Previews</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap");
+
+      :root {
+        --radius-lg: 20px;
+        --radius-md: 14px;
+        --radius-sm: 10px;
+        --shadow-lg: 0 30px 80px -45px rgba(12, 14, 24, 0.45);
+        --shadow-md: 0 16px 30px -24px rgba(12, 14, 24, 0.4);
+        --space-1: 4px;
+        --space-2: 8px;
+        --space-3: 12px;
+        --space-4: 16px;
+        --space-5: 20px;
+        --space-6: 24px;
+        --space-7: 32px;
+        --space-8: 40px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Manrope", "Sora", sans-serif;
+        background: radial-gradient(circle at top, #faf7f4 0%, #f2f4f6 40%, #e9edf1 100%);
+        color: #191c21;
+      }
+
+      .page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px 24px 80px;
+      }
+
+      header {
+        margin-bottom: 32px;
+      }
+
+      header h1 {
+        font-family: "Sora", "Manrope", sans-serif;
+        font-size: 28px;
+        margin: 0 0 8px;
+        letter-spacing: -0.02em;
+      }
+
+      header p {
+        margin: 0;
+        color: #4f5661;
+        font-size: 15px;
+      }
+
+      .themes {
+        display: grid;
+        gap: 32px;
+      }
+
+      .theme {
+        padding: 24px;
+        border-radius: var(--radius-lg);
+        background: var(--background);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-lg);
+        position: relative;
+        overflow: hidden;
+        animation: fadeUp 600ms ease both;
+      }
+
+      .theme::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(120deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0));
+        pointer-events: none;
+      }
+
+      .theme-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+      }
+
+      .theme-title {
+        font-family: "Sora", "Manrope", sans-serif;
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .swatches {
+        display: flex;
+        gap: 8px;
+      }
+
+      .swatch {
+        width: 18px;
+        height: 18px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: var(--swatch);
+      }
+
+      .app-shell {
+        background: var(--surface);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border);
+        overflow: hidden;
+        box-shadow: var(--shadow-md);
+        display: grid;
+        grid-template-columns: 320px 1fr;
+      }
+
+      .sidebar {
+        border-right: 1px solid var(--border);
+        padding: 20px;
+        background: var(--surface);
+      }
+
+      .panel {
+        padding: 24px;
+        background: linear-gradient(140deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.7));
+      }
+
+      .nav-tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+
+      .tab {
+        padding: 8px 14px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .tab.active {
+        background: var(--accent);
+        color: #ffffff;
+        border-color: transparent;
+      }
+
+      .summary {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+
+      .summary-card {
+        border-radius: var(--radius-md);
+        background: var(--background);
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .summary-card strong {
+        display: block;
+        color: var(--text);
+        font-size: 14px;
+        margin-top: 4px;
+      }
+
+      .list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .list-item {
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border);
+        padding: 10px 12px;
+        background: var(--surface);
+        display: grid;
+        gap: 6px;
+        animation: listIn 650ms ease both;
+      }
+
+      .list-item:nth-child(2) { animation-delay: 80ms; }
+      .list-item:nth-child(3) { animation-delay: 160ms; }
+      .list-item:nth-child(4) { animation-delay: 240ms; }
+
+      .list-item.active {
+        border-color: var(--accent);
+        box-shadow: inset 0 0 0 1px var(--accent);
+      }
+
+      .list-item .title {
+        font-weight: 600;
+        color: var(--text);
+        font-size: 13px;
+      }
+
+      .list-item .meta {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .relevance {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--success);
+      }
+
+      .relevance.low {
+        color: var(--danger);
+        opacity: 0.55;
+      }
+
+      .toggle {
+        margin-top: 14px;
+        font-size: 12px;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .detail-title {
+        font-family: "Sora", "Manrope", sans-serif;
+        font-size: 22px;
+        margin: 0 0 8px;
+        color: var(--text);
+      }
+
+      .detail-meta {
+        color: var(--muted);
+        font-size: 13px;
+        margin-bottom: 18px;
+      }
+
+      .detail-body {
+        font-size: 14px;
+        line-height: 1.6;
+        color: var(--text);
+        margin-bottom: 22px;
+      }
+
+      .cta-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .cta {
+        padding: 10px 16px;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .cta.relevant {
+        background: var(--success);
+        color: #ffffff;
+      }
+
+      .cta.irrelevant {
+        background: var(--danger);
+        color: #ffffff;
+      }
+
+      .cta.reset {
+        background: transparent;
+        color: var(--muted);
+        border-color: var(--border);
+      }
+
+      .footer-row {
+        margin-top: 24px;
+        font-size: 12px;
+        color: var(--muted);
+        display: flex;
+        justify-content: space-between;
+      }
+
+      @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(14px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes listIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      @media (max-width: 900px) {
+        .app-shell {
+          grid-template-columns: 1fr;
+        }
+        .sidebar {
+          border-right: none;
+          border-bottom: 1px solid var(--border);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .theme,
+        .list-item {
+          animation: none;
+        }
+      }
+
+      .theme-a {
+        --background: #f7f3ee;
+        --surface: #ffffff;
+        --text: #1e1b16;
+        --muted: #6b6259;
+        --accent: #2f5e4e;
+        --success: #1f7a5e;
+        --danger: #b35a4a;
+        --border: #e3d9cf;
+      }
+
+      .theme-b {
+        --background: #f2f4f6;
+        --surface: #ffffff;
+        --text: #1a1f2b;
+        --muted: #5f6675;
+        --accent: #2e3a59;
+        --success: #1f7a6d;
+        --danger: #c65a5a;
+        --border: #d9dfe6;
+      }
+
+      .theme-c {
+        --background: #f5f7f8;
+        --surface: #ffffff;
+        --text: #1b2025;
+        --muted: #66707a;
+        --accent: #1e6f7b;
+        --success: #1b7c64;
+        --danger: #b85e5e;
+        --border: #e1e6ea;
+      }
+
+      .theme-d {
+        --background: #f4f6fb;
+        --surface: #ffffff;
+        --text: #111827;
+        --muted: #6b7280;
+        --accent: #1d4ed8;
+        --success: #16a34a;
+        --danger: #ef4444;
+        --border: #e5e7eb;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <h1>Jobato theme previews</h1>
+        <p>Three visual directions for the daily review experience.</p>
+      </header>
+
+      <section class="themes">
+        <div class="theme theme-a">
+          <div class="theme-header">
+            <div class="theme-title">Theme A: Sandstone + Pine</div>
+            <div class="swatches">
+              <span class="swatch" style="--swatch:#f7f3ee"></span>
+              <span class="swatch" style="--swatch:#2f5e4e"></span>
+              <span class="swatch" style="--swatch:#1f7a5e"></span>
+              <span class="swatch" style="--swatch:#b35a4a"></span>
+            </div>
+          </div>
+          <div class="app-shell">
+            <aside class="sidebar">
+              <div class="nav-tabs">
+                <span class="tab active">Today</span>
+                <span class="tab">All Time</span>
+              </div>
+              <div class="summary">
+                <div class="summary-card">New today<strong>12</strong></div>
+                <div class="summary-card">Relevant<strong>7</strong></div>
+              </div>
+              <div class="list">
+                <div class="list-item active">
+                  <div class="title">Lead Python Engineer</div>
+                  <div class="meta">Helio Labs · Remote · 2d</div>
+                  <div class="relevance">Top fit · 0.92</div>
+                </div>
+                <div class="list-item">
+                  <div class="title">Staff Backend Engineer</div>
+                  <div class="meta">Nordic Tools · Hybrid · 1d</div>
+                  <div class="relevance">Strong · 0.81</div>
+                </div>
+                <div class="list-item">
+                  <div class="title">Engineering Manager</div>
+                  <div class="meta">Cicero · Remote · 3d</div>
+                  <div class="relevance low">Low · -0.41</div>
+                </div>
+              </div>
+              <div class="toggle">Hide irrelevant: On</div>
+            </aside>
+            <section class="panel">
+              <h2 class="detail-title">Lead Python Engineer</h2>
+              <div class="detail-meta">Helio Labs · Remote · Posted 2 days ago</div>
+              <p class="detail-body">
+                Own the backend for a distributed platform. Lead a small team shipping tools for
+                global logistics. Strong Python, API design, and infra collaboration.
+              </p>
+              <div class="cta-row">
+                <button class="cta relevant">Relevant</button>
+                <button class="cta irrelevant">Irrelevant</button>
+                <button class="cta reset">Reset</button>
+              </div>
+              <div class="footer-row">
+                <span>Run: 22:10 · 9m ago</span>
+                <span>Quota left: 38</span>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <div class="theme theme-b">
+          <div class="theme-header">
+            <div class="theme-title">Theme B: Ink + Copper</div>
+            <div class="swatches">
+              <span class="swatch" style="--swatch:#f2f4f6"></span>
+              <span class="swatch" style="--swatch:#2e3a59"></span>
+              <span class="swatch" style="--swatch:#1f7a6d"></span>
+              <span class="swatch" style="--swatch:#c65a5a"></span>
+            </div>
+          </div>
+          <div class="app-shell">
+            <aside class="sidebar">
+              <div class="nav-tabs">
+                <span class="tab active">Today</span>
+                <span class="tab">All Time</span>
+              </div>
+              <div class="summary">
+                <div class="summary-card">New today<strong>9</strong></div>
+                <div class="summary-card">Relevant<strong>5</strong></div>
+              </div>
+              <div class="list">
+                <div class="list-item active">
+                  <div class="title">Principal Software Engineer</div>
+                  <div class="meta">Orion Cloud · Remote · 1d</div>
+                  <div class="relevance">Top fit · 0.89</div>
+                </div>
+                <div class="list-item">
+                  <div class="title">Tech Lead, Platform</div>
+                  <div class="meta">Linearity · Remote · 1d</div>
+                  <div class="relevance">Strong · 0.78</div>
+                </div>
+                <div class="list-item">
+                  <div class="title">Engineering Manager</div>
+                  <div class="meta">Kite Systems · Hybrid · 4d</div>
+                  <div class="relevance low">Low · -0.35</div>
+                </div>
+              </div>
+              <div class="toggle">Hide irrelevant: On</div>
+            </aside>
+            <section class="panel">
+              <h2 class="detail-title">Principal Software Engineer</h2>
+              <div class="detail-meta">Orion Cloud · Remote · Posted 1 day ago</div>
+              <p class="detail-body">
+                Build scalable data services for global clients. Own architecture and
+                mentor senior engineers. Strong Python, API design, and distributed systems.
+              </p>
+              <div class="cta-row">
+                <button class="cta relevant">Relevant</button>
+                <button class="cta irrelevant">Irrelevant</button>
+                <button class="cta reset">Reset</button>
+              </div>
+              <div class="footer-row">
+                <span>Run: 22:07 · 12m ago</span>
+                <span>Quota left: 31</span>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <div class="theme theme-c">
+          <div class="theme-header">
+            <div class="theme-title">Theme C: Mist + Teal</div>
+            <div class="swatches">
+              <span class="swatch" style="--swatch:#f5f7f8"></span>
+              <span class="swatch" style="--swatch:#1e6f7b"></span>
+              <span class="swatch" style="--swatch:#1b7c64"></span>
+              <span class="swatch" style="--swatch:#b85e5e"></span>
+            </div>
+          </div>
+          <div class="app-shell">
+            <aside class="sidebar">
+              <div class="nav-tabs">
+                <span class="tab active">Today</span>
+                <span class="tab">All Time</span>
+              </div>
+              <div class="summary">
+                <div class="summary-card">New today<strong>15</strong></div>
+                <div class="summary-card">Relevant<strong>8</strong></div>
+              </div>
+              <div class="list">
+                <div class="list-item active">
+                  <div class="title">Senior Backend Engineer</div>
+                  <div class="meta">Atlas Systems · Remote · 1d</div>
+                  <div class="relevance">Top fit · 0.94</div>
+                </div>
+                <div class="list-item">
+                  <div class="title">Staff Platform Engineer</div>
+                  <div class="meta">Lumen Tech · Remote · 2d</div>
+                  <div class="relevance">Strong · 0.86</div>
+                </div>
+                <div class="list-item">
+                  <div class="title">Engineering Manager</div>
+                  <div class="meta">Bridge Labs · Hybrid · 3d</div>
+                  <div class="relevance low">Low · -0.22</div>
+                </div>
+              </div>
+              <div class="toggle">Hide irrelevant: On</div>
+            </aside>
+            <section class="panel">
+              <h2 class="detail-title">Senior Backend Engineer</h2>
+              <div class="detail-meta">Atlas Systems · Remote · Posted 1 day ago</div>
+              <p class="detail-body">
+                Design services for a global fintech platform. Collaborate with product and
+                infra to ship reliable features. Python, microservices, and cloud experience required.
+              </p>
+              <div class="cta-row">
+                <button class="cta relevant">Relevant</button>
+                <button class="cta irrelevant">Irrelevant</button>
+                <button class="cta reset">Reset</button>
+              </div>
+              <div class="footer-row">
+                <span>Run: 22:13 · 6m ago</span>
+                <span>Quota left: 42</span>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <div class="theme theme-d">
+          <div class="theme-header">
+            <div class="theme-title">Theme D: Cobalt + Coral</div>
+            <div class="swatches">
+              <span class="swatch" style="--swatch:#f4f6fb"></span>
+              <span class="swatch" style="--swatch:#1d4ed8"></span>
+              <span class="swatch" style="--swatch:#16a34a"></span>
+              <span class="swatch" style="--swatch:#ef4444"></span>
+            </div>
+          </div>
+          <div class="app-shell">
+            <aside class="sidebar">
+              <div class="nav-tabs">
+                <span class="tab active">Today</span>
+                <span class="tab">All Time</span>
+              </div>
+              <div class="summary">
+                <div class="summary-card">New today<strong>11</strong></div>
+                <div class="summary-card">Relevant<strong>6</strong></div>
+              </div>
+              <div class="list">
+                <div class="list-item active">
+                  <div class="title">Lead Platform Engineer</div>
+                  <div class="meta">Aria Systems · Remote · 1d</div>
+                  <div class="relevance">Top fit · 0.91</div>
+                </div>
+                <div class="list-item">
+                  <div class="title">Staff Backend Engineer</div>
+                  <div class="meta">Nimbus · Remote · 2d</div>
+                  <div class="relevance">Strong · 0.84</div>
+                </div>
+                <div class="list-item">
+                  <div class="title">Engineering Manager</div>
+                  <div class="meta">Torque · Hybrid · 3d</div>
+                  <div class="relevance low">Low · -0.28</div>
+                </div>
+              </div>
+              <div class="toggle">Hide irrelevant: On</div>
+            </aside>
+            <section class="panel">
+              <h2 class="detail-title">Lead Platform Engineer</h2>
+              <div class="detail-meta">Aria Systems · Remote · Posted 1 day ago</div>
+              <p class="detail-body">
+                Lead platform reliability for a global SaaS product. Own service performance,
+                mentor teams, and drive infrastructure improvements. Python experience preferred.
+              </p>
+              <div class="cta-row">
+                <button class="cta relevant">Relevant</button>
+                <button class="cta irrelevant">Irrelevant</button>
+                <button class="cta reset">Reset</button>
+              </div>
+              <div class="footer-row">
+                <span>Run: 22:05 · 14m ago</span>
+                <span>Quota left: 29</span>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>
