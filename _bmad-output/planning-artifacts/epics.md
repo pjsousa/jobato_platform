@@ -1,5 +1,5 @@
 ---
-stepsCompleted: ['step-01-validate-prerequisites', 'step-02-design-epics']
+stepsCompleted: ['step-01-validate-prerequisites', 'step-02-design-epics', 'step-03-create-stories']
 inputDocuments:
   - /Users/pedro/Dev/jobato/_bmad-output/planning-artifacts/prd.md
   - /Users/pedro/Dev/jobato/_bmad-output/planning-artifacts/architecture.md
@@ -548,27 +548,152 @@ So that scoring uses the best available model.
 **Then** the system can roll back to that model version
 **And** scoring resumes with the selected version
 
-<!-- Repeat for each epic in epics_list (N = 4...) -->
+## Epic 4: Daily Review and Feedback UX
 
-## Epic {{N}}: {{epic_title_N}}
+Users review Today/All Time results, label relevance, and manage visibility of irrelevant items.
 
-{{epic_goal_N}}
+### Story 4.1: Today and All Time results views
 
-<!-- Repeat for each story (M = 1, 2, 3...) within epic N -->
-
-### Story {{N}}.{{M}}: {{story_title_N_M}}
-
-As a {{user_type}},
-I want {{capability}},
-So that {{value_benefit}}.
+As a user,
+I want to switch between Today and All Time views,
+So that I can focus on new results or review history.
 
 **Acceptance Criteria:**
 
-<!-- for each AC on this story -->
+**Given** results exist
+**When** I select Today
+**Then** I see only results new since the last run
+**And** the list is filtered accordingly
 
-**Given** {{precondition}}
-**When** {{action}}
-**Then** {{expected_outcome}}
-**And** {{additional_criteria}}
+**Given** results exist
+**When** I select All Time
+**Then** I see the full history of results
+**And** the list reflects all stored items
 
-<!-- End story repeat -->
+**Given** the view changes
+**When** data is loading
+**Then** a clear loading state is shown
+**And** the prior selection is preserved when possible
+
+### Story 4.2: Two-pane results layout with selection
+
+As a user,
+I want a split layout with a ranked list and a detail panel,
+So that I can scan quickly and see context.
+
+**Acceptance Criteria:**
+
+**Given** the Today view loads
+**When** results are present
+**Then** the top-ranked item is selected by default
+**And** its details are shown in the right panel
+
+**Given** an item is selected
+**When** I navigate the list
+**Then** the detail panel updates to the selected item
+**And** the list visually highlights the active item
+
+**Given** screen width is below 1024px
+**When** the view renders
+**Then** the list stacks above the detail panel
+**And** selection remains persistent across the layout change
+
+### Story 4.3: Key fields and duplicate count display
+
+As a user,
+I want to see key job fields and duplicate counts,
+So that I can judge relevance quickly.
+
+**Acceptance Criteria:**
+
+**Given** a result item
+**When** it is displayed in the list
+**Then** it shows title, company, snippet, source, and posted date
+**And** duplicate count is shown when available
+
+**Given** a canonical item
+**When** it is displayed in detail
+**Then** it shows the duplicate count and canonical linkage
+**And** the detail view surfaces the source link
+
+### Story 4.4: Mark job as irrelevant and clear label
+
+As a user,
+I want to mark a job as irrelevant and clear the label if needed,
+So that my feedback improves results.
+
+**Acceptance Criteria:**
+
+**Given** a selected job
+**When** I click the title
+**Then** its label cycles Relevant -> Irrelevant -> None
+**And** the list state pill updates accordingly
+
+**Given** a label changes
+**When** it is saved
+**Then** the UI updates immediately
+**And** the label is persisted for future runs
+
+**Given** a job reappears
+**When** it has a prior label
+**Then** the label can be cleared manually
+**And** the cleared state is saved
+
+### Story 4.5: Toggle irrelevant visibility
+
+As a user,
+I want to hide or show irrelevant items,
+So that I can focus on the most relevant results.
+
+**Acceptance Criteria:**
+
+**Given** the toggle is off
+**When** a job is labeled irrelevant
+**Then** it is hidden from the list
+**And** the total count reflects the filtered view
+
+**Given** the toggle is on
+**When** irrelevant items exist
+**Then** they are shown with de-emphasized styling
+**And** their labels remain visible
+
+### Story 4.6: Sort by first seen time
+
+As a user,
+I want results sorted by first seen time,
+So that the newest items appear first in Today view.
+
+**Acceptance Criteria:**
+
+**Given** results are loaded
+**When** the list is rendered
+**Then** items are sorted by first seen time descending
+**And** the ordering is stable across refreshes
+
+**Given** a user switches views
+**When** the list renders
+**Then** the sort order remains consistent
+**And** the active selection is preserved when possible
+
+### Story 4.7: Accessibility and keyboard interaction
+
+As a user,
+I want full keyboard navigation and accessible UI,
+So that I can use the app efficiently.
+
+**Acceptance Criteria:**
+
+**Given** the list has focus
+**When** I use arrow keys
+**Then** selection moves and the detail panel updates
+**And** focus remains visible at all times
+
+**Given** the title is focused
+**When** I press Enter or Space
+**Then** the label cycles
+**And** the change is announced to assistive tech
+
+**Given** focus changes
+**When** the UI renders
+**Then** focus states meet WCAG AA contrast
+**And** interactive elements have clear labels
