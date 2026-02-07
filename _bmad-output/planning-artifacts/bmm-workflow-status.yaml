@@ -5,7 +5,7 @@ selected_track: "method"
 field_type: "greenfield"
 workflow_path: "/Users/pedro/Dev/jobato/_bmad/bmm/workflows/workflow-status/paths/method-greenfield.yaml"
 workflow_status:
-  brainstorm-project: optional
+  brainstorm-project: skipped
   research: skipped
   product-brief: "/Users/pedro/Dev/jobato/_bmad-output/planning-artifacts/product-brief-jobato-2026-02-05.md"
   product-brief-completed-at: "2026-02-05"
