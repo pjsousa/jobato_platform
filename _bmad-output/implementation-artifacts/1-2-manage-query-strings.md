@@ -1,6 +1,6 @@
 # Story 1.2: Manage query strings
 
-Status: review
+Status: in-progress
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -35,6 +35,14 @@ so that I can control the job searches I care about.
 - [x] Add targeted tests (AC: 1, 2, 3, 4)
   - [x] API unit tests for duplicate detection, enable/disable, and update behavior
   - [x] Frontend tests for add/edit/disable flows (if UI is in scope)
+
+### Review Follow-ups (AI)
+
+- [ ] [AI-Review][High] Story File List claims changes but git history is clean; verify commits or correct File List to match actual diffs [_bmad-output/implementation-artifacts/1-2-manage-query-strings.md:144]
+- [ ] [AI-Review][Medium] Add controller-boundary validation for update payloads (ensure valid text and/or enabled) [api/src/main/java/com/jobato/api/controller/QueryController.java:41]
+- [ ] [AI-Review][Medium] RFC 7807 responses missing required fields like errorCode/instance; align with architecture format [api/src/main/java/com/jobato/api/controller/ApiExceptionHandler.java:16]
+- [ ] [AI-Review][Medium] Validate duplicate entries when loading config to catch external edits [api/src/main/java/com/jobato/api/repository/FileQueryRepository.java:43]
+- [ ] [AI-Review][Low] PUT and PATCH are treated identically; adjust semantics or split handlers [api/src/main/java/com/jobato/api/controller/QueryController.java:41]
 
 ## Dev Notes
 
