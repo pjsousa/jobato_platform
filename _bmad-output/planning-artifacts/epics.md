@@ -180,6 +180,16 @@ So that the system can run locally with baseline services.
 **Then** only health checks are required
 **And** no business logic is required for this story
 
+**Given** the service skeletons exist
+**When** I run each service build command
+**Then** frontend, API, and ML builds complete successfully
+**And** build artifacts are generated in their default locations
+
+**Given** dependencies are installed and configs are generated
+**When** I start services via docker-compose
+**Then** all services start without errors
+**And** health endpoints return HTTP 200
+
 ### Story 1.2: Manage query strings
 
 As a user,
@@ -512,8 +522,13 @@ So that I can compare their metrics side-by-side.
 
 **Given** N registered models
 **When** an evaluation run is requested
-**Then** all N models are trained on the same labeled dataset and evaluated independently
-**And** evaluation jobs run in parallel where possible
+**Then** an evaluation job is enqueued for each model
+**And** a worker pool of size evalWorkers processes jobs concurrently
+
+**Given** evalWorkers is configured to 3
+**When** an evaluation run is requested
+**Then** at most 3 model evaluations run at the same time
+**And** remaining jobs are queued until a worker is available
 
 **Given** evaluation completes
 **When** results are stored

@@ -14,7 +14,7 @@ workflow_status:
   create-ux-design: "/Users/pedro/Dev/jobato/_bmad-output/planning-artifacts/ux-design-specification.md"
   create-ux-design-completed-at: "2026-02-05"
   create-architecture: "/Users/pedro/Dev/jobato/_bmad-output/planning-artifacts/architecture.md"
-  create-epics-and-stories: required
+  create-epics-and-stories: "/Users/pedro/Dev/jobato/_bmad-output/planning-artifacts/epics.md"
   test-design: optional
-  implementation-readiness: required
+  implementation-readiness: "/Users/pedro/Dev/jobato/_bmad-output/planning-artifacts/implementation-readiness-report-2026-02-07.md"
   sprint-planning: required
