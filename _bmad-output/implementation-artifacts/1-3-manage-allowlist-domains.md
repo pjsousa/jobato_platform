@@ -1,6 +1,6 @@
 # Story 1.3: Manage allowlist domains
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -19,14 +19,14 @@ so that searches run only on approved sites.
 
 ## Tasks / Subtasks
 
-- [ ] Define allowlist entry shape and persistence in `config/allowlists.yaml` (domain + enabled), including normalization rules and atomic read/write. (AC: 1, 3, 4)
-  - [ ] Decide uniqueness key (domain string) and normalization (trim, lowercase, no scheme/path).
-- [ ] API: implement allowlist list/create/update/enable-disable in `AllowlistController/Service/Repository` under `/api/allowlists`. (AC: 1-4)
-  - [ ] Validate domain format and duplicates; return RFC 7807 Problem Details for errors.
-  - [ ] Ensure edits only affect future runs (no backfill or history mutation).
-- [ ] Frontend: add allowlist management UI under `frontend/src/features/allowlist` with list + add/edit + enable/disable, backed by TanStack Query. (AC: 1-3)
-  - [ ] Keep UI minimal and keyboard-accessible; avoid complex configuration flows.
-- [ ] Tests: add API tests under `api/src/test/java` for validation/duplication/enable-disable; add co-located UI tests as needed. (AC: 1-4)
+- [x] Define allowlist entry shape and persistence in `config/allowlists.yaml` (domain + enabled), including normalization rules and atomic read/write. (AC: 1, 3, 4)
+  - [x] Decide uniqueness key (domain string) and normalization (trim, lowercase, no scheme/path).
+- [x] API: implement allowlist list/create/update/enable-disable in `AllowlistController/Service/Repository` under `/api/allowlists`. (AC: 1-4)
+  - [x] Validate domain format and duplicates; return RFC 7807 Problem Details for errors.
+  - [x] Ensure edits only affect future runs (no backfill or history mutation).
+- [x] Frontend: add allowlist management UI under `frontend/src/features/allowlist` with list + add/edit + enable/disable, backed by TanStack Query. (AC: 1-3)
+  - [x] Keep UI minimal and keyboard-accessible; avoid complex configuration flows.
+- [x] Tests: add API tests under `api/src/test/java` for validation/duplication/enable-disable; add co-located UI tests as needed. (AC: 1-4)
 
 ## Dev Notes
 
@@ -105,11 +105,60 @@ openai/gpt-5.2-codex
 ### Debug Log References
 
 - create-story workflow (CS 1.3, yolo)
+- Tests: `./gradlew test` (api), `npm test` (frontend)
 
 ### Completion Notes List
 
 - Ultimate context engine analysis completed - comprehensive developer guide created.
+- Implemented allowlist YAML persistence with atomic writes and domain normalization rules.
+- Added allowlist API endpoints with RFC 7807 error handling and CRUD tests.
+- Built allowlist UI with TanStack Query, minimal layout, and component tests.
+- Tests passed: api `./gradlew test`, frontend `npm test`.
 
 ### File List
 
 - `/_bmad-output/implementation-artifacts/1-3-manage-allowlist-domains.md`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `api/src/main/java/com/jobato/api/model/AllowlistEntry.java`
+- `api/src/main/java/com/jobato/api/controller/AllowlistController.java`
+- `api/src/main/java/com/jobato/api/controller/AllowlistExceptionHandler.java`
+- `api/src/main/java/com/jobato/api/dto/AllowlistCreateRequest.java`
+- `api/src/main/java/com/jobato/api/dto/AllowlistResponse.java`
+- `api/src/main/java/com/jobato/api/dto/AllowlistUpdateRequest.java`
+- `api/src/main/java/com/jobato/api/repository/AllowlistRepository.java`
+- `api/src/main/java/com/jobato/api/service/AllowlistDuplicateException.java`
+- `api/src/main/java/com/jobato/api/service/AllowlistDomainNormalizer.java`
+- `api/src/main/java/com/jobato/api/service/AllowlistDomainValidationException.java`
+- `api/src/main/java/com/jobato/api/service/AllowlistNotFoundException.java`
+- `api/src/main/java/com/jobato/api/service/AllowlistService.java`
+- `api/src/main/java/com/jobato/api/service/AllowlistUpdateException.java`
+- `api/src/test/java/com/jobato/api/controller/AllowlistControllerTest.java`
+- `api/src/test/java/com/jobato/api/repository/AllowlistRepositoryTest.java`
+- `api/src/test/java/com/jobato/api/service/AllowlistDomainNormalizerTest.java`
+- `config/allowlists.yaml`
+- `frontend/package.json`
+- `frontend/package-lock.json`
+- `frontend/src/app/App.tsx`
+- `frontend/src/app/providers.tsx`
+- `frontend/src/app/query-client.ts`
+- `frontend/src/app/router.tsx`
+- `frontend/src/features/allowlist/api/allowlist-api.ts`
+- `frontend/src/features/allowlist/components/AllowlistForm.test.tsx`
+- `frontend/src/features/allowlist/components/AllowlistForm.tsx`
+- `frontend/src/features/allowlist/components/AllowlistPage.tsx`
+- `frontend/src/features/allowlist/components/AllowlistTable.test.tsx`
+- `frontend/src/features/allowlist/components/AllowlistTable.tsx`
+- `frontend/src/features/allowlist/hooks/use-allowlist.ts`
+- `frontend/src/features/allowlist/index.ts`
+- `frontend/src/main.tsx`
+- `frontend/src/styles/globals.css`
+- `frontend/src/test/setup.ts`
+- `frontend/tsconfig.app.json`
+- `frontend/vite.config.ts`
+- `frontend/src/App.tsx` (deleted)
+- `frontend/src/App.css` (deleted)
+- `frontend/src/index.css` (deleted)
+
+### Change Log
+
+- Implemented allowlist YAML persistence, API CRUD endpoints, and frontend management UI with tests. (2026-02-07)
