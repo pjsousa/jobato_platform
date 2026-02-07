@@ -42,7 +42,7 @@ story_location: /Users/pedro/Dev/jobato/_bmad-output/implementation-artifacts
 development_status:
   epic-1: in-progress
   1-1-set-up-initial-project-from-starter-template: review
-  1-2-manage-query-strings: ready-for-dev
+  1-2-manage-query-strings: review
   1-3-manage-allowlist-domains: ready-for-dev
   1-4-generate-per-site-query-combinations: backlog
   epic-1-retrospective: optional
