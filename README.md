@@ -9,6 +9,82 @@ Jobato is a daily, personalized job discovery tool for senior and lead software 
 - ML: FastAPI (Python 3), SQLAlchemy 2.0.46, Alembic 1.18.3, prometheus-client 0.24.1
 - Data and Messaging: SQLite 3.51.2, Redis Streams (Redis 8.4)
 
+## Quickstart
+
+### Docker Compose (all services)
+
+1. Copy `.env.example` to `.env` and update values as needed.
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Start all services.
+
+   ```bash
+   docker compose up --build
+   ```
+
+Service endpoints:
+
+- Frontend: http://localhost:5173
+- API: http://localhost:8080/api
+- ML: http://localhost:8000
+- Redis: localhost:6379
+
+To stop services:
+
+```bash
+docker compose down
+```
+
+### Run services locally
+
+Service env files:
+
+- `frontend/.env.example`
+- `api/.env.example`
+- `ml/.env.example`
+
+#### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+#### API
+
+```bash
+cd api
+./gradlew bootRun
+```
+
+#### ML
+
+```bash
+cd ml
+pip install -r requirements.txt
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+## Architecture
+
+Diagram: The frontend calls the API; the API coordinates the ML service, persists data in SQLite, and both services use Redis and shared config/data.
+
+```mermaid
+flowchart LR
+    User[User] --> UI[Frontend]
+    UI -->|HTTP| API[API]
+    API -->|HTTP| ML[ML Service]
+    API --> SQLite[(SQLite)]
+    API --> Redis[(Redis Streams)]
+    ML --> Redis
+    API --> Files[Config + Data]
+    ML --> Files
+```
+
 ## Repository Layout
 
 - `frontend/` - React UI for reviewing daily job leads and giving relevance feedback
@@ -23,6 +99,8 @@ Jobato is a daily, personalized job discovery tool for senior and lead software 
 ## Frontend
 
 The frontend provides the UI to review job results, manage queries and allowlists, and capture relevance feedback.
+
+Docs: `frontend/README.md`
 
 ### Structure
 
@@ -55,3 +133,61 @@ The ML service scores job postings for relevance and manages model training and 
 - `ml/app/main.py` - FastAPI application entrypoint
 - `ml/requirements.txt` - Python dependencies
 - `ml/.env.example` - Environment configuration template
+
+## Usage Examples
+
+### API
+
+List queries:
+
+```bash
+curl http://localhost:8080/api/queries
+```
+
+Create a query:
+
+```bash
+curl -X POST http://localhost:8080/api/queries \
+  -H "Content-Type: application/json" \
+  -d '{"text":"site:greenhouse.io \"senior backend\" remote"}'
+```
+
+Update a query:
+
+```bash
+curl -X PATCH http://localhost:8080/api/queries/<id> \
+  -H "Content-Type: application/json" \
+  -d '{"enabled":false}'
+```
+
+List allowlisted domains:
+
+```bash
+curl http://localhost:8080/api/allowlists
+```
+
+Add an allowlisted domain:
+
+```bash
+curl -X POST http://localhost:8080/api/allowlists \
+  -H "Content-Type: application/json" \
+  -d '{"domain":"example.com"}'
+```
+
+Update an allowlisted domain:
+
+```bash
+curl -X PATCH http://localhost:8080/api/allowlists/example.com \
+  -H "Content-Type: application/json" \
+  -d '{"enabled":false}'
+```
+
+If your environment enforces API keys, add `-H "X-Jobato-Api-Key: <value>"` to the curl commands above.
+
+### ML
+
+Health check:
+
+```bash
+curl http://localhost:8000/health
+```
