@@ -152,7 +152,35 @@ Users review Today/All Time results, label relevance, and manage visibility of i
 
 Users define and control what gets searched through queries and allowlists.
 
-### Story 1.1: Manage query strings
+### Story 1.1: Set up initial project from starter template
+
+As a developer,
+I want to initialize the project from the approved starter templates,
+So that the system can run locally with baseline services.
+
+**Acceptance Criteria:**
+
+**Given** the approved starter templates (Vite React TypeScript, Spring Boot, FastAPI)
+**When** I initialize the project
+**Then** service skeletons are created under frontend/, api/, and ml/
+**And** the repository includes infra/, config/, data/, and scripts/ folders
+
+**Given** docker-compose is started
+**When** services are running
+**Then** API and ML health endpoints respond
+**And** Redis is reachable by both services
+
+**Given** shared volumes are configured
+**When** services run
+**Then** config/ and data/ are mounted
+**And** each service includes a .env.example file
+
+**Given** the baseline is up
+**When** I verify runtime behavior
+**Then** only health checks are required
+**And** no business logic is required for this story
+
+### Story 1.2: Manage query strings
 
 As a user,
 I want to create and edit query strings,
@@ -180,7 +208,7 @@ So that I can control the job searches I care about.
 **Then** the system rejects the duplicate with a clear validation error
 **And** no additional query entry is created
 
-### Story 1.2: Manage allowlist domains
+### Story 1.3: Manage allowlist domains
 
 As a user,
 I want to create and edit allowlisted domains,
@@ -208,7 +236,7 @@ So that searches run only on approved sites.
 **Then** the system rejects it with a clear validation error
 **And** no allowlist entry is created
 
-### Story 1.3: Generate per-site query combinations
+### Story 1.4: Generate per-site query combinations
 
 As a user,
 I want the system to combine enabled queries and allowlisted domains,
@@ -235,35 +263,7 @@ So that each run executes per-site searches.
 
 Users can run the pipeline and the system captures results reliably within quota and run-status constraints.
 
-### Story 2.1: Local-first runtime baseline
-
-As a developer,
-I want a local multi-service baseline with shared config and data,
-So that I can run the system end-to-end and trigger runs locally.
-
-**Acceptance Criteria:**
-
-**Given** the repository is initialized
-**When** the baseline scaffold is created
-**Then** top-level folders exist (frontend/, api/, ml/, infra/, config/, data/, scripts/)
-**And** service skeletons are present for frontend, API, and ML
-
-**Given** docker-compose is started
-**When** services are running
-**Then** API and ML health endpoints respond
-**And** Redis is reachable by both services
-
-**Given** shared volumes are configured
-**When** services run
-**Then** config/ and data/ are mounted
-**And** each service has a .env.example file
-
-**Given** the baseline is up
-**When** I verify runtime behavior
-**Then** only health checks are required
-**And** no business logic is required for this story
-
-### Story 2.2: Manual run request and lifecycle tracking
+### Story 2.1: Manual run request and lifecycle tracking
 
 As a user,
 I want to trigger a run and see its lifecycle state,
@@ -291,7 +291,7 @@ So that I know when a run starts, finishes, or fails.
 **Then** the run status is updated accordingly
 **And** the end timestamp is recorded
 
-### Story 2.3: Quota and concurrency enforcement
+### Story 2.2: Quota and concurrency enforcement
 
 As a user,
 I want runs to respect concurrency and daily quota limits,
@@ -314,7 +314,7 @@ So that I avoid exceeding API limits.
 **Then** the system stops issuing new calls
 **And** the run is marked partial with a quota-reached reason
 
-### Story 2.4: Fetch search results and persist metadata
+### Story 2.3: Fetch search results and persist metadata
 
 As a user,
 I want the system to fetch search results for each query x allowlist pair,
@@ -342,7 +342,7 @@ So that I can review job opportunities found in the run.
 **Then** job metadata (title, snippet, domain, query, timestamps) is stored
 **And** each result is linked to the run
 
-### Story 2.5: Capture raw HTML and visible text
+### Story 2.4: Capture raw HTML and visible text
 
 As a user,
 I want raw HTML and visible text captured for each job page,
@@ -365,7 +365,7 @@ So that the system can analyze and display content later.
 **Then** the system records the error
 **And** continues processing other results
 
-### Story 2.6: Cache results and enforce revisit throttling
+### Story 2.5: Cache results and enforce revisit throttling
 
 As a user,
 I want the system to reuse recent results and avoid revisiting the same URL too soon,
@@ -383,7 +383,7 @@ So that runs are efficient and within quota.
 **Then** the system skips revisiting it
 **And** records the skip reason with the result
 
-### Story 2.7: Run summary metrics and zero-results logging
+### Story 2.6: Run summary metrics and zero-results logging
 
 As a user,
 I want run summaries and visibility into zero-result queries,
@@ -547,6 +547,29 @@ So that scoring uses the best available model.
 **When** I switch back
 **Then** the system can roll back to that model version
 **And** scoring resumes with the selected version
+
+### Story 3.7: Daily retrain for the active model
+
+As a user,
+I want the active model retrained daily,
+So that feedback improves tomorrow’s results.
+
+**Acceptance Criteria:**
+
+**Given** labeled results exist
+**When** the daily retrain job runs
+**Then** the active model is retrained and a new version is produced
+**And** the model version is recorded for the run
+
+**Given** the daily retrain completes
+**When** new results are scored
+**Then** the latest active model version is used
+**And** the version is stored with each score
+
+**Given** no new labels exist
+**When** the retrain job runs
+**Then** the system completes without error
+**And** retains the current active model version
 
 ## Epic 4: Daily Review and Feedback UX
 
