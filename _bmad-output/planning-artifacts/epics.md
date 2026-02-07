@@ -148,7 +148,90 @@ Results are deduped and scored so the review list is higher quality by default.
 Users review Today/All Time results, label relevance, and manage visibility of irrelevant items.
 **FRs covered:** FR26, FR27, FR28, FR29, FR30, FR31, FR32, FR33
 
-<!-- Repeat for each epic in epics_list (N = 1, 2, 3...) -->
+## Epic 1: Configure Search Scope
+
+Users define and control what gets searched through queries and allowlists.
+
+### Story 1.1: Manage query strings
+
+As a user,
+I want to create and edit query strings,
+So that I can control the job searches I care about.
+
+**Acceptance Criteria:**
+
+**Given** a valid query string
+**When** I add it
+**Then** it is persisted and available for runs
+**And** it appears in the enabled queries list by default
+
+**Given** an existing query
+**When** I edit it
+**Then** the updated query is stored and used on subsequent runs
+**And** existing run history remains unchanged
+
+**Given** an existing query
+**When** I disable it
+**Then** it is excluded from run generation
+**And** it remains available for re-enable without losing its contents
+
+**Given** a duplicate query text
+**When** I try to add it
+**Then** the system rejects the duplicate with a clear validation error
+**And** no additional query entry is created
+
+### Story 1.2: Manage allowlist domains
+
+As a user,
+I want to create and edit allowlisted domains,
+So that searches run only on approved sites.
+
+**Acceptance Criteria:**
+
+**Given** a valid domain
+**When** I add it
+**Then** it is persisted and available for runs
+**And** it appears in the enabled allowlist by default
+
+**Given** an existing domain
+**When** I edit it
+**Then** the updated domain is stored and used on subsequent runs
+**And** existing run history remains unchanged
+
+**Given** an existing domain
+**When** I disable it
+**Then** it is excluded from run generation
+**And** it remains available for re-enable without losing its contents
+
+**Given** an invalid domain format
+**When** I try to add it
+**Then** the system rejects it with a clear validation error
+**And** no allowlist entry is created
+
+### Story 1.3: Generate per-site query combinations
+
+As a user,
+I want the system to combine enabled queries and allowlisted domains,
+So that each run executes per-site searches.
+
+**Acceptance Criteria:**
+
+**Given** enabled queries and allowlisted domains
+**When** a run is initiated
+**Then** the system generates all query x domain combinations
+**And** only enabled queries and domains are included
+
+**Given** a disabled query or domain
+**When** a run is initiated
+**Then** combinations including it are not generated
+**And** the run uses only enabled inputs
+
+**Given** no enabled queries or domains
+**When** a run is initiated
+**Then** the system returns a clear error and does not proceed
+**And** the user is prompted to add or enable queries and domains
+
+<!-- Repeat for each epic in epics_list (N = 2, 3, 4...) -->
 
 ## Epic {{N}}: {{epic_title_N}}
 
