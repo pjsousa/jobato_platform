@@ -231,7 +231,182 @@ So that each run executes per-site searches.
 **Then** the system returns a clear error and does not proceed
 **And** the user is prompted to add or enable queries and domains
 
-<!-- Repeat for each epic in epics_list (N = 2, 3, 4...) -->
+## Epic 2: Run & Capture Results
+
+Users can run the pipeline and the system captures results reliably within quota and run-status constraints.
+
+### Story 2.1: Local-first runtime baseline
+
+As a developer,
+I want a local multi-service baseline with shared config and data,
+So that I can run the system end-to-end and trigger runs locally.
+
+**Acceptance Criteria:**
+
+**Given** the repository is initialized
+**When** the baseline scaffold is created
+**Then** top-level folders exist (frontend/, api/, ml/, infra/, config/, data/, scripts/)
+**And** service skeletons are present for frontend, API, and ML
+
+**Given** docker-compose is started
+**When** services are running
+**Then** API and ML health endpoints respond
+**And** Redis is reachable by both services
+
+**Given** shared volumes are configured
+**When** services run
+**Then** config/ and data/ are mounted
+**And** each service has a .env.example file
+
+**Given** the baseline is up
+**When** I verify runtime behavior
+**Then** only health checks are required
+**And** no business logic is required for this story
+
+### Story 2.2: Manual run request and lifecycle tracking
+
+As a user,
+I want to trigger a run and see its lifecycle state,
+So that I know when a run starts, finishes, or fails.
+
+**Acceptance Criteria:**
+
+**Given** no run is in progress
+**When** I trigger a run
+**Then** a run record is created with status "running"
+**And** the start timestamp is recorded
+
+**Given** a run is triggered
+**When** the system accepts it
+**Then** a run.requested event is published to Redis Streams
+**And** the event includes runId and event metadata
+
+**Given** a run is already in progress
+**When** I trigger another run
+**Then** the system rejects it with a clear "run in progress" error
+**And** no new run record is created
+
+**Given** ML publishes a run completion or failure event
+**When** the API consumes the event
+**Then** the run status is updated accordingly
+**And** the end timestamp is recorded
+
+### Story 2.3: Quota and concurrency enforcement
+
+As a user,
+I want runs to respect concurrency and daily quota limits,
+So that I avoid exceeding API limits.
+
+**Acceptance Criteria:**
+
+**Given** configured concurrency and daily quota
+**When** a run executes
+**Then** concurrent query execution does not exceed the configured limit
+**And** the quota counter is updated as calls are made
+
+**Given** the daily quota is already reached
+**When** I trigger a run
+**Then** the system blocks the run
+**And** returns a quota-reached error
+
+**Given** the quota is reached mid-run
+**When** additional calls would exceed it
+**Then** the system stops issuing new calls
+**And** the run is marked partial with a quota-reached reason
+
+### Story 2.4: Fetch search results and persist metadata
+
+As a user,
+I want the system to fetch search results for each query x allowlist pair,
+So that I can review job opportunities found in the run.
+
+**Acceptance Criteria:**
+
+**Given** enabled queries and allowlisted domains
+**When** a run executes
+**Then** the system calls Google Search for each query x domain combination
+**And** each call is associated with the run ID
+
+**Given** a result URL redirects once
+**When** the system fetches it
+**Then** it follows a single redirect
+**And** stores the final URL
+
+**Given** a 404 response
+**When** the system encounters it
+**Then** the result is ignored
+**And** no record is created for that result
+
+**Given** valid results
+**When** they are persisted
+**Then** job metadata (title, snippet, domain, query, timestamps) is stored
+**And** each result is linked to the run
+
+### Story 2.5: Capture raw HTML and visible text
+
+As a user,
+I want raw HTML and visible text captured for each job page,
+So that the system can analyze and display content later.
+
+**Acceptance Criteria:**
+
+**Given** a result URL
+**When** the system fetches the page
+**Then** raw HTML is saved to the file store
+**And** the stored path is recorded with the result
+
+**Given** saved HTML
+**When** extraction runs
+**Then** visible text is extracted and stored
+**And** linked to the result record
+
+**Given** a fetch error
+**When** it occurs
+**Then** the system records the error
+**And** continues processing other results
+
+### Story 2.6: Cache results and enforce revisit throttling
+
+As a user,
+I want the system to reuse recent results and avoid revisiting the same URL too soon,
+So that runs are efficient and within quota.
+
+**Acceptance Criteria:**
+
+**Given** cached results within the 12-hour TTL for a query x domain
+**When** a run executes
+**Then** cached results are used instead of a new API call
+**And** the cache usage is recorded for the run
+
+**Given** a job URL was visited within the last week
+**When** a run executes
+**Then** the system skips revisiting it
+**And** records the skip reason with the result
+
+### Story 2.7: Run summary metrics and zero-results logging
+
+As a user,
+I want run summaries and visibility into zero-result queries,
+So that I can understand run outcomes and tune inputs.
+
+**Acceptance Criteria:**
+
+**Given** a run completes
+**When** metrics are computed
+**Then** the system records trigger time, duration, new jobs count, and overall status
+**And** relevant count is included (0 if no labels exist yet)
+
+**Given** a query returns zero results
+**When** that happens
+**Then** the system logs it with query and domain context
+**And** the log entry is linked to the run
+
+**Given** a run finishes
+**When** I request the last run status
+**Then** the latest status and summary metrics are available via the API
+**And** the response includes a run identifier
+
+<!-- Repeat for each epic in epics_list (N = 3, 4...) -->
 
 ## Epic {{N}}: {{epic_title_N}}
 
