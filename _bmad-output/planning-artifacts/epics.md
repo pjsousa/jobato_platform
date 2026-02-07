@@ -406,7 +406,149 @@ So that I can understand run outcomes and tune inputs.
 **Then** the latest status and summary metrics are available via the API
 **And** the response includes a run identifier
 
-<!-- Repeat for each epic in epics_list (N = 3, 4...) -->
+## Epic 3: Result Quality Automation
+
+Results are deduped and scored so the review list is higher quality by default.
+
+### Story 3.1: Normalize URLs for stable dedupe keys
+
+As a user,
+I want results normalized into stable URL keys,
+So that the system can reliably detect duplicates.
+
+**Acceptance Criteria:**
+
+**Given** a result URL
+**When** it is ingested
+**Then** a normalized URL key is generated and stored
+**And** the key is used for future dedupe checks
+
+**Given** two URLs that differ only by tracking params or casing
+**When** they are normalized
+**Then** they produce the same normalized key
+**And** the raw URL is still preserved
+
+**Given** a result URL that cannot be normalized
+**When** normalization fails
+**Then** the system records a clear error
+**And** dedupe is skipped for that item
+
+### Story 3.2: Detect and link duplicates
+
+As a user,
+I want duplicates detected and linked to a canonical result,
+So that repeated postings do not clutter review.
+
+**Acceptance Criteria:**
+
+**Given** two results with the same normalized key
+**When** dedupe runs
+**Then** the later result is linked to the canonical record
+**And** the canonical record remains visible by default
+
+**Given** two results with high text similarity
+**When** dedupe runs
+**Then** they are linked even if URLs differ
+**And** the duplicate is flagged hidden by default
+
+**Given** a duplicate is stored
+**When** it is retrieved via the API
+**Then** it is hidden by default
+**And** its canonical link is available for reference
+
+### Story 3.3: Assign relevance scores (baseline)
+
+As a user,
+I want each result assigned a relevance score,
+So that review is prioritized by likely fit.
+
+**Acceptance Criteria:**
+
+**Given** a new result
+**When** it is scored
+**Then** it receives a score in the range -1 to 1
+**And** the score is stored with the result
+
+**Given** no prior model exists
+**When** a result is scored
+**Then** the default score is 0
+**And** the scoring pipeline completes successfully
+
+**Given** a stored score
+**When** results are retrieved
+**Then** the score is available for sorting and display
+**And** the API returns it in the response payload
+
+### Story 3.4: Pluggable model interface and registry
+
+As a ML developer,
+I want the system to load multiple candidate models that follow a scikit-learn style interface,
+So that teams can plug in their own models without changing the core pipeline.
+
+**Acceptance Criteria:**
+
+**Given** a model package that implements fit and predict
+**When** it is registered
+**Then** the system can load it without code changes to the core pipeline
+**And** it is available as a selectable candidate
+
+**Given** a registry configuration
+**When** the ML service starts
+**Then** it discovers all available models
+**And** exposes their identifiers for evaluation
+
+**Given** an invalid model module
+**When** it is loaded
+**Then** the system rejects it with a clear error
+**And** continues with other models
+
+### Story 3.5: Parallel candidate training and evaluation
+
+As a user,
+I want multiple candidate models trained and evaluated in parallel on the same dataset,
+So that I can compare their metrics side-by-side.
+
+**Acceptance Criteria:**
+
+**Given** N registered models
+**When** an evaluation run is requested
+**Then** all N models are trained on the same labeled dataset and evaluated independently
+**And** evaluation jobs run in parallel where possible
+
+**Given** evaluation completes
+**When** results are stored
+**Then** each model has a metrics record tied to the run ID and model version
+**And** the metrics record includes dataset identifiers
+
+**Given** default metrics are required
+**When** evaluation runs
+**Then** it produces precision, recall, F1, and accuracy
+**And** the schema is extensible for additional metrics
+
+### Story 3.6: Model selection and activation
+
+As a user,
+I want to view candidate metrics and promote one model to active use,
+So that scoring uses the best available model.
+
+**Acceptance Criteria:**
+
+**Given** evaluation results exist
+**When** I request comparisons
+**Then** I can see each candidate’s metrics for the run
+**And** results are grouped by model version
+
+**Given** a candidate is promoted
+**When** new results are scored
+**Then** the active model is used
+**And** its version is recorded with each score
+
+**Given** a previous model is selected again
+**When** I switch back
+**Then** the system can roll back to that model version
+**And** scoring resumes with the selected version
+
+<!-- Repeat for each epic in epics_list (N = 4...) -->
 
 ## Epic {{N}}: {{epic_title_N}}
 
