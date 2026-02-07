@@ -1,0 +1,46 @@
+.query-page {
+  gap: 24px;
+}
+
+.query-hero {
+  display: grid;
+  gap: 12px;
+  max-width: 720px;
+  animation: queryRise 0.7s ease both;
+}
+
+.query-hero h1 {
+  font-size: clamp(2.1rem, 3.5vw, 3rem);
+}
+
+.query-panel {
+  animation: queryFloat 0.9s ease both;
+}
+
+.query-hint {
+  font-size: 0.9rem;
+  color: var(--muted);
+  max-width: 680px;
+}
+
+@keyframes queryRise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes queryFloat {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

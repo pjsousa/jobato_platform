@@ -126,7 +126,7 @@
   border: 1px solid var(--border);
 }
 
-.button {
+.query-manager .button {
   border: none;
   border-radius: 999px;
   padding: 0.65rem 1.2rem;
@@ -135,24 +135,24 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.button.primary {
+.query-manager .button.primary {
   background: var(--accent);
   color: white;
   box-shadow: 0 12px 20px rgba(43, 127, 120, 0.2);
 }
 
-.button.secondary {
+.query-manager .button.secondary {
   background: transparent;
   border: 1px solid var(--border);
   color: var(--ink);
 }
 
-.button.ghost {
+.query-manager .button.ghost {
   background: transparent;
   color: var(--accent-strong);
 }
 
-.button:disabled {
+.query-manager .button:disabled {
   cursor: not-allowed;
   opacity: 0.7;
   box-shadow: none;

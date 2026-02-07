@@ -5,10 +5,13 @@
   font-family: 'Manrope', 'Segoe UI', sans-serif;
   background-color: #f7f3ee;
   color: #1e1b16;
+  --ink: #1e1b16;
   --surface: #ffffff;
+  --surface-strong: #fffaf5;
   --border: #e3d9cf;
   --muted: #6b6259;
   --accent: #2f5e4e;
+  --accent-strong: #254a3f;
   --accent-soft: #e1ebe7;
   --danger: #b35a4a;
   --warning: #c9823c;
