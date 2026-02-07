@@ -1,0 +1,77 @@
+# generated: 2026-02-07
+# project: jobato
+# project_key: jobato
+# tracking_system: file-system
+# story_location: /Users/pedro/Dev/jobato/_bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog -> in-progress: Automatically when first story is created (via create-story)
+#   - in-progress -> done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-02-07
+project: jobato
+project_key: jobato
+tracking_system: file-system
+story_location: /Users/pedro/Dev/jobato/_bmad-output/implementation-artifacts
+
+development_status:
+  epic-1: backlog
+  1-1-set-up-initial-project-from-starter-template: backlog
+  1-2-manage-query-strings: backlog
+  1-3-manage-allowlist-domains: backlog
+  1-4-generate-per-site-query-combinations: backlog
+  epic-1-retrospective: optional
+
+  epic-2: backlog
+  2-1-manual-run-request-and-lifecycle-tracking: backlog
+  2-2-quota-and-concurrency-enforcement: backlog
+  2-3-fetch-search-results-and-persist-metadata: backlog
+  2-4-capture-raw-html-and-visible-text: backlog
+  2-5-cache-results-and-enforce-revisit-throttling: backlog
+  2-6-run-summary-metrics-and-zero-results-logging: backlog
+  epic-2-retrospective: optional
+
+  epic-3: backlog
+  3-1-normalize-urls-for-stable-dedupe-keys: backlog
+  3-2-detect-and-link-duplicates: backlog
+  3-3-assign-relevance-scores-baseline: backlog
+  3-4-pluggable-model-interface-and-registry: backlog
+  3-5-parallel-candidate-training-and-evaluation: backlog
+  3-6-model-selection-and-activation: backlog
+  3-7-daily-retrain-for-the-active-model: backlog
+  epic-3-retrospective: optional
+
+  epic-4: backlog
+  4-1-today-and-all-time-results-views: backlog
+  4-2-two-pane-results-layout-with-selection: backlog
+  4-3-key-fields-and-duplicate-count-display: backlog
+  4-4-mark-job-as-irrelevant-and-clear-label: backlog
+  4-5-toggle-irrelevant-visibility: backlog
+  4-6-sort-by-first-seen-time: backlog
+  4-7-accessibility-and-keyboard-interaction: backlog
+  epic-4-retrospective: optional
