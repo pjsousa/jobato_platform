@@ -1,6 +1,6 @@
 # Story 1.3: Manage allowlist domains
 
-Status: review
+Status: in-progress
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -27,6 +27,15 @@ so that searches run only on approved sites.
 - [x] Frontend: add allowlist management UI under `frontend/src/features/allowlist` with list + add/edit + enable/disable, backed by TanStack Query. (AC: 1-3)
   - [x] Keep UI minimal and keyboard-accessible; avoid complex configuration flows.
 - [x] Tests: add API tests under `api/src/test/java` for validation/duplication/enable-disable; add co-located UI tests as needed. (AC: 1-4)
+
+### Review Follow-ups (AI)
+
+- [ ] [AI-Review][High] Align Spring Boot/SpringDoc versions with architecture (4.0.2.RELEASE / 3.0.1) [api/build.gradle:3] [api/build.gradle:25]
+- [ ] [AI-Review][High] Story File List does not match git working tree; reconcile story documentation with actual changes [/_bmad-output/implementation-artifacts/1-3-manage-allowlist-domains.md:118]
+- [ ] [AI-Review][Medium] Guard null/empty create request body to return RFC 7807 instead of 500 [api/src/main/java/com/jobato/api/service/AllowlistService.java:24] [api/src/main/java/com/jobato/api/controller/AllowlistController.java:34]
+- [ ] [AI-Review][Medium] YAML persistence drops unknown keys/comments; preserve or explicitly document ownership of `config/allowlists.yaml` [api/src/main/java/com/jobato/api/repository/AllowlistRepository.java:69] [api/src/main/java/com/jobato/api/repository/AllowlistRepository.java:102]
+- [ ] [AI-Review][Low] Confirm configuration UI is intended for MVP; otherwise move to admin/CLI flow [frontend/src/features/allowlist/components/AllowlistPage.tsx:54]
+- [ ] [AI-Review][Low] Avoid empty state during loading; show loading skeleton or suppress empty state until query resolves [frontend/src/features/allowlist/components/AllowlistTable.tsx:10] [frontend/src/features/allowlist/components/AllowlistPage.tsx:83]
 
 ## Dev Notes
 
