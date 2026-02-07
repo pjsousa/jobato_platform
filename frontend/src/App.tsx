@@ -1,34 +1,25 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
+import { QueryManager } from './features/queries/components/QueryManager'
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
+    <div className="app">
+      <header className="hero">
+        <span className="eyebrow">Search scope</span>
+        <h1>Query strings for future runs</h1>
         <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
+          Capture the queries you care about. Updates apply to new runs only and
+          never alter historical results.
         </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+      </header>
+      <main className="panel">
+        <QueryManager />
+      </main>
+      <footer className="hint">
+        Saved to <strong>config/queries.yaml</strong> and shared with the API and
+        ML pipeline.
+      </footer>
+    </div>
   )
 }
 

@@ -1,6 +1,6 @@
 # Story 1.2: Manage query strings
 
-Status: ready-for-dev
+Status: in-progress
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -19,22 +19,30 @@ so that I can control the job searches I care about.
 
 ## Tasks / Subtasks
 
-- [ ] Define query config schema and persistence rules (AC: 1, 2, 3, 4)
-  - [ ] Specify `config/queries.yaml` schema (id, text, enabled, createdAt, updatedAt) and normalization rules for duplicate detection
-  - [ ] Implement atomic read/write with validation and stable ordering
-  - [ ] Default new queries to enabled=true; disable keeps record without data loss
-- [ ] Implement query management API (AC: 1, 2, 3, 4)
-  - [ ] GET `/api/queries` returns list with enabled state
-  - [ ] POST `/api/queries` validates duplicates and persists
-  - [ ] PUT/PATCH `/api/queries/{id}` edits text and enabled state without mutating run history
-  - [ ] Return RFC 7807 Problem Details for validation errors
-- [ ] Build minimal query management UI (AC: 1, 2, 3, 4)
-  - [ ] Query list with add/edit and enable/disable controls
-  - [ ] Use TanStack Query for fetch/mutations; invalidate list on success
-  - [ ] Keep UI minimal; avoid complex filtering/configuration surfaces
-- [ ] Add targeted tests (AC: 1, 2, 3, 4)
-  - [ ] API unit tests for duplicate detection, enable/disable, and update behavior
-  - [ ] Frontend tests for add/edit/disable flows (if UI is in scope)
+- [x] Define query config schema and persistence rules (AC: 1, 2, 3, 4)
+  - [x] Specify `config/queries.yaml` schema (id, text, enabled, createdAt, updatedAt) and normalization rules for duplicate detection
+  - [x] Implement atomic read/write with validation and stable ordering
+  - [x] Default new queries to enabled=true; disable keeps record without data loss
+- [x] Implement query management API (AC: 1, 2, 3, 4)
+  - [x] GET `/api/queries` returns list with enabled state
+  - [x] POST `/api/queries` validates duplicates and persists
+  - [x] PUT/PATCH `/api/queries/{id}` edits text and enabled state without mutating run history
+  - [x] Return RFC 7807 Problem Details for validation errors
+- [x] Build minimal query management UI (AC: 1, 2, 3, 4)
+  - [x] Query list with add/edit and enable/disable controls
+  - [x] Use TanStack Query for fetch/mutations; invalidate list on success
+  - [x] Keep UI minimal; avoid complex filtering/configuration surfaces
+- [x] Add targeted tests (AC: 1, 2, 3, 4)
+  - [x] API unit tests for duplicate detection, enable/disable, and update behavior
+  - [x] Frontend tests for add/edit/disable flows (if UI is in scope)
+
+### Review Follow-ups (AI)
+
+- [ ] [AI-Review][High] Story File List claims changes but git history is clean; verify commits or correct File List to match actual diffs [_bmad-output/implementation-artifacts/1-2-manage-query-strings.md:144]
+- [ ] [AI-Review][Medium] Add controller-boundary validation for update payloads (ensure valid text and/or enabled) [api/src/main/java/com/jobato/api/controller/QueryController.java:41]
+- [ ] [AI-Review][Medium] RFC 7807 responses missing required fields like errorCode/instance; align with architecture format [api/src/main/java/com/jobato/api/controller/ApiExceptionHandler.java:16]
+- [ ] [AI-Review][Medium] Validate duplicate entries when loading config to catch external edits [api/src/main/java/com/jobato/api/repository/FileQueryRepository.java:43]
+- [ ] [AI-Review][Low] PUT and PATCH are treated identically; adjust semantics or split handlers [api/src/main/java/com/jobato/api/controller/QueryController.java:41]
 
 ## Dev Notes
 
@@ -123,6 +131,12 @@ openai/gpt-5.2-codex
 
 - Validation workflow file not found: `_bmad/core/tasks/validate-workflow.xml`
 
+### Implementation Plan
+
+- Define `config/queries.yaml` schema and file-backed repository with atomic writes and validation.
+- Implement QueryService normalization/duplicate checks and REST endpoints with RFC 7807 errors.
+- Build a minimal React query manager with TanStack Query and add API/UI tests.
+
 ### Completion Notes List
 
 - Story drafted from epics, architecture, PRD, UX, and project-context sources.
@@ -130,8 +144,43 @@ openai/gpt-5.2-codex
 - Web research referenced for Spring ProblemDetail and TanStack Query basics.
 - Ultimate context engine analysis completed - comprehensive developer guide created.
 - Sprint status updated to ready-for-dev.
+- Implemented file-backed query persistence with normalization and atomic writes in `config/queries.yaml`.
+- Added `/api/queries` GET/POST/PATCH/PUT with ProblemDetail validation responses.
+- Built minimal query management UI using TanStack Query for list/mutations.
+- Tests run: `./gradlew test`, `npm run test`, `npm run lint`.
 
 ### File List
 
+- api/src/main/java/com/jobato/api/config/ClockConfig.java
+- api/src/main/java/com/jobato/api/controller/ApiExceptionHandler.java
+- api/src/main/java/com/jobato/api/controller/QueryController.java
+- api/src/main/java/com/jobato/api/dto/QueryCreateRequest.java
+- api/src/main/java/com/jobato/api/dto/QueryResponse.java
+- api/src/main/java/com/jobato/api/dto/QueryUpdateRequest.java
+- api/src/main/java/com/jobato/api/model/QueryDefinition.java
+- api/src/main/java/com/jobato/api/repository/FileQueryRepository.java
+- api/src/main/java/com/jobato/api/repository/QueryRepository.java
+- api/src/main/java/com/jobato/api/service/QueryNotFoundException.java
+- api/src/main/java/com/jobato/api/service/QueryService.java
+- api/src/main/java/com/jobato/api/service/QueryValidationException.java
+- api/src/test/java/com/jobato/api/service/QueryServiceTest.java
+- config/queries.yaml
+- frontend/package.json
+- frontend/src/App.css
+- frontend/src/App.tsx
+- frontend/src/index.css
+- frontend/src/main.tsx
+- frontend/src/test-setup.ts
+- frontend/src/vite-env.d.ts
+- frontend/src/features/queries/api/queries.ts
+- frontend/src/features/queries/components/QueryManager.css
+- frontend/src/features/queries/components/QueryManager.test.tsx
+- frontend/src/features/queries/components/QueryManager.tsx
+- frontend/src/features/queries/hooks/use-queries.ts
+- frontend/vite.config.ts
 - _bmad-output/implementation-artifacts/1-2-manage-query-strings.md
 - _bmad-output/implementation-artifacts/sprint-status.yaml
+
+## Change Log
+
+- 2026-02-07: Implemented query config persistence, API endpoints, UI, and tests for Story 1.2.
