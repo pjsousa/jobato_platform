@@ -1,0 +1,4 @@
+fastapi[standard]
+sqlalchemy==2.0.46
+alembic==1.18.3
+prometheus-client==0.24.1

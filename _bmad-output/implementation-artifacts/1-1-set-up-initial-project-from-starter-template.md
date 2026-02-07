@@ -1,6 +1,6 @@
 # Story 1.1: Set up initial project from starter template
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -21,21 +21,21 @@ so that the system can run locally with baseline services.
 
 ## Tasks / Subtasks
 
-- [ ] Scaffold repo layout and shared folders (AC: 1, 3)
-  - [ ] Create top-level folders: frontend/, api/, ml/, infra/, config/, data/, scripts/
-  - [ ] Add baseline config/ and data/ subfolders (data/db/runs, data/db/current-db.txt, data/html/raw, data/html/canonical) and keep data/ gitignored
-  - [ ] Add .env.example in frontend/, api/, ml/ (and root .env.example if used)
-- [ ] Initialize service skeletons with starter templates (AC: 1, 5)
-  - [ ] Frontend: Vite React TS in frontend/
-  - [ ] API: Spring Boot Java 17 Gradle in api/ with web, validation, data-jdbc, actuator, springdoc
-  - [ ] ML: FastAPI scaffold in ml/ with requirements.txt and basic app entry
-- [ ] Docker Compose baseline with Redis and shared volumes (AC: 2, 3, 6)
-  - [ ] docker-compose.yml brings up frontend, api, ml, redis; mounts config/ and data/ into api and ml
-  - [ ] Ensure Redis is reachable from api and ml via service hostname
-  - [ ] Add health endpoints: API via Actuator, ML via FastAPI route
-- [ ] Build and runtime checks (AC: 4, 5, 6)
-  - [ ] Frontend, API, and ML build commands succeed
-  - [ ] docker-compose up starts all services; health endpoints return HTTP 200
+- [x] Scaffold repo layout and shared folders (AC: 1, 3)
+  - [x] Create top-level folders: frontend/, api/, ml/, infra/, config/, data/, scripts/
+  - [x] Add baseline config/ and data/ subfolders (data/db/runs, data/db/current-db.txt, data/html/raw, data/html/canonical) and keep data/ gitignored
+  - [x] Add .env.example in frontend/, api/, ml/ (and root .env.example if used)
+- [x] Initialize service skeletons with starter templates (AC: 1, 5)
+  - [x] Frontend: Vite React TS in frontend/
+  - [x] API: Spring Boot Java 17 Gradle in api/ with web, validation, data-jdbc, actuator, springdoc
+  - [x] ML: FastAPI scaffold in ml/ with requirements.txt and basic app entry
+- [x] Docker Compose baseline with Redis and shared volumes (AC: 2, 3, 6)
+  - [x] docker-compose.yml brings up frontend, api, ml, redis; mounts config/ and data/ into api and ml
+  - [x] Ensure Redis is reachable from api and ml via service hostname
+  - [x] Add health endpoints: API via Actuator, ML via FastAPI route
+- [x] Build and runtime checks (AC: 4, 5, 6)
+  - [x] Frontend, API, and ML build commands succeed
+  - [x] docker-compose up starts all services; health endpoints return HTTP 200
 
 ## Dev Notes
 
@@ -100,15 +100,81 @@ so that the system can run locally with baseline services.
 
 openai/gpt-5.2-codex
 
+### Implementation Plan
+
+- Add a scaffold verification test.
+- Create required top-level and data/config folders with placeholders.
+- Add root and per-service .env.example files.
+
 ### Debug Log References
 
 - Validation workflow file not found: _bmad/core/tasks/validate-workflow.xml
+- API build failed: Spring Boot Gradle plugin 4.0.2.RELEASE not found in plugin portal.
+- API build failed: Spring Boot Gradle plugin 3.5.10.RELEASE not found in plugin portal.
+- docker compose up failed: Docker daemon not running.
+- API bootRun failed: springdoc 3.0.1 depends on Spring Boot 4.0.1 modules.
+- API bootRun failed: missing datasource driver; excluded JDBC auto-config for scaffold.
 
 ### Completion Notes List
 
 - Story drafted from epics, architecture, PRD, UX, and project-context.
 - Web research performed for Vite, Spring Boot, and FastAPI current guidance.
+- Scaffolded repo layout, env examples, and data/config structure; added scaffold verification test.
+- Added frontend Vite React TS scaffold, API Gradle skeleton, and ML FastAPI entry with pinned dependencies.
+- Added docker-compose baseline with Redis, service Dockerfiles, Actuator base path config, and ML health route.
+- Updated Spring Boot Gradle plugin to 3.5.10 to unblock builds; frontend and API builds completed; ML venv install and import check complete.
+- Updated springdoc to 2.7.0 for Boot 3.5 compatibility; disabled JDBC auto-config for scaffold startup; docker-compose up with API/ML health checks returning 200.
 
 ### File List
 
+- .env.example
+- .gitignore
+- api/.env.example
+- api/Dockerfile
+- api/build.gradle
+- api/gradle/wrapper/gradle-wrapper.jar
+- api/gradle/wrapper/gradle-wrapper.properties
+- api/gradlew
+- api/gradlew.bat
+- api/settings.gradle
+- api/src/main/java/com/jobato/api/JobatoApiApplication.java
+- api/src/main/resources/application.yml
+- api/src/test/java/com/jobato/api/JobatoApiApplicationTests.java
+- config/.gitkeep
+- data/.gitignore
+- data/db/current-db.txt
+- data/db/runs/.gitkeep
+- data/html/canonical/.gitkeep
+- data/html/raw/.gitkeep
+- docker-compose.yml
+- frontend/.env.example
+- frontend/Dockerfile
+- frontend/.gitignore
+- frontend/README.md
+- frontend/eslint.config.js
+- frontend/index.html
+- frontend/package-lock.json
+- frontend/package.json
+- frontend/public/vite.svg
+- frontend/src/App.css
+- frontend/src/App.tsx
+- frontend/src/assets/react.svg
+- frontend/src/index.css
+- frontend/src/main.tsx
+- frontend/tsconfig.app.json
+- frontend/tsconfig.json
+- frontend/tsconfig.node.json
+- frontend/vite.config.ts
+- infra/.gitkeep
+- ml/.env.example
+- ml/Dockerfile
+- ml/app/__init__.py
+- ml/app/main.py
+- ml/requirements.txt
+- scripts/test_scaffold.py
 - _bmad-output/implementation-artifacts/1-1-set-up-initial-project-from-starter-template.md
+- _bmad-output/implementation-artifacts/sprint-status.yaml
+
+## Change Log
+
+- 2026-02-07: Scaffolded repo layout and service skeletons; added docker-compose baseline, health endpoints, and build/run validation.

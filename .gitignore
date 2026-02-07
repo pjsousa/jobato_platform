@@ -1,0 +1,9 @@
+.env
+**/.env
+**/.gradle/
+**/build/
+**/.project
+**/.settings/
+**/__pycache__/
+.venv/
+**/.venv/

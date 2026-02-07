@@ -1,0 +1,11 @@
+*
+!.gitignore
+!db/
+!db/current-db.txt
+!db/runs/
+!db/runs/.gitkeep
+!html/
+!html/raw/
+!html/raw/.gitkeep
+!html/canonical/
+!html/canonical/.gitkeep

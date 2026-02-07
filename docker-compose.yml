@@ -1,0 +1,49 @@
+services:
+  redis:
+    image: redis:8.4
+    ports:
+      - "6379:6379"
+
+  api:
+    build:
+      context: ./api
+    environment:
+      JOBATO_API_KEY: ${JOBATO_API_KEY:-}
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      CONFIG_DIR: /app/config
+      DATA_DIR: /app/data
+    volumes:
+      - ./config:/app/config
+      - ./data:/app/data
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+
+  ml:
+    build:
+      context: ./ml
+    environment:
+      JOBATO_API_KEY: ${JOBATO_API_KEY:-}
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      CONFIG_DIR: /app/config
+      DATA_DIR: /app/data
+    volumes:
+      - ./config:/app/config
+      - ./data:/app/data
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+
+  frontend:
+    build:
+      context: ./frontend
+    environment:
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080/api}
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
