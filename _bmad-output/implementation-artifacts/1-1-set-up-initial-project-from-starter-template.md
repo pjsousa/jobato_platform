@@ -1,6 +1,6 @@
 # Story 1.1: Set up initial project from starter template
 
-Status: review
+Status: in-progress
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -36,6 +36,17 @@ so that the system can run locally with baseline services.
 - [x] Build and runtime checks (AC: 4, 5, 6)
   - [x] Frontend, API, and ML build commands succeed
   - [x] docker-compose up starts all services; health endpoints return HTTP 200
+
+### Review Follow-ups (AI)
+
+- [ ] [AI-Review][HIGH] Align Spring Boot plugin version to 4.0.2.RELEASE (or update architecture/story) [api/build.gradle:3]
+- [ ] [AI-Review][HIGH] Align SpringDoc to 3.0.1 to match architecture (or update architecture/story) [api/build.gradle:25]
+- [ ] [AI-Review][HIGH] Remove scaffold test dependency on build artifacts/__pycache__ or create them in test setup; currently asserts build outputs [scripts/test_scaffold.py:68]
+- [ ] [AI-Review][HIGH] Implement Redis reachability checks with client deps in API/ML; none present [api/build.gradle:20]
+- [ ] [AI-Review][MEDIUM] Add docker-compose healthcheck blocks for api (/api/health) and ml (/health) [docker-compose.yml:7]
+- [ ] [AI-Review][MEDIUM] Pin Vite version (avoid caret drift) to match architecture note [frontend/package.json:31]
+- [ ] [AI-Review][MEDIUM] Add root Makefile per project structure notes or update story/architecture if intentionally omitted [_bmad-output/implementation-artifacts/1-1-set-up-initial-project-from-starter-template.md:86]
+- [ ] [AI-Review][LOW] Replace placeholder API test with real assertion [api/src/test/java/com/jobato/api/JobatoApiApplicationTests.java:4]
 
 ## Dev Notes
 

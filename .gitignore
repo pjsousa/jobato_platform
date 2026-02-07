@@ -1,4 +1,5 @@
 .env
+**/*.class
 **/.env
 **/.gradle/
 **/build/
@@ -7,3 +8,10 @@
 **/__pycache__/
 .venv/
 **/.venv/
+
+# java
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
