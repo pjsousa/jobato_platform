@@ -40,8 +40,8 @@ so that the system can run locally with baseline services.
 ### Review Follow-ups (AI)
 
 - [x] [AI-Review][HIGH] Remove scaffold test dependency on build artifacts/__pycache__ or create them in test setup; currently asserts build outputs [scripts/test_scaffold.py:68]
-- [ ] [AI-Review][HIGH] Implement Redis reachability checks with client deps in API/ML; none present [api/build.gradle:20]
-- [ ] [AI-Review][MEDIUM] Add docker-compose healthcheck blocks for api (/api/health) and ml (/health) [docker-compose.yml:7]
+- [x] [AI-Review][HIGH] Implement Redis reachability checks with client deps in API/ML; none present [api/build.gradle:20]
+- [x] [AI-Review][MEDIUM] Add docker-compose healthcheck blocks for api (/api/health) and ml (/health) [docker-compose.yml:7]
 - [ ] [AI-Review][MEDIUM] Pin Vite version (avoid caret drift) to match architecture note [frontend/package.json:31]
 - [ ] [AI-Review][MEDIUM] Add root Makefile per project structure notes or update story/architecture if intentionally omitted [_bmad-output/implementation-artifacts/1-1-set-up-initial-project-from-starter-template.md:86]
 - [ ] [AI-Review][LOW] Replace placeholder API test with real assertion [api/src/test/java/com/jobato/api/JobatoApiApplicationTests.java:4]
