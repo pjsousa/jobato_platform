@@ -39,8 +39,6 @@ so that the system can run locally with baseline services.
 
 ### Review Follow-ups (AI)
 
-- [ ] [AI-Review][HIGH] Align Spring Boot plugin version to 4.0.2.RELEASE (or update architecture/story) [api/build.gradle:3]
-- [ ] [AI-Review][HIGH] Align SpringDoc to 3.0.1 to match architecture (or update architecture/story) [api/build.gradle:25]
 - [ ] [AI-Review][HIGH] Remove scaffold test dependency on build artifacts/__pycache__ or create them in test setup; currently asserts build outputs [scripts/test_scaffold.py:68]
 - [ ] [AI-Review][HIGH] Implement Redis reachability checks with client deps in API/ML; none present [api/build.gradle:20]
 - [ ] [AI-Review][MEDIUM] Add docker-compose healthcheck blocks for api (/api/health) and ml (/health) [docker-compose.yml:7]
@@ -57,7 +55,7 @@ so that the system can run locally with baseline services.
 
 ### Technical Requirements
 
-- Use the pinned stack versions: React Router 7.13.0, TanStack Query 5.90.20, react-window 2.2.6, Spring Boot 4.0.2.RELEASE (Java 17), SpringDoc 3.0.1, Flyway 12.0.0, FastAPI, SQLAlchemy 2.0.46, Alembic 1.18.3, Redis 8.4, SQLite 3.51.2.
+- Use the pinned stack versions: React Router 7.13.0, TanStack Query 5.90.20, react-window 2.2.6, Spring Boot 3.5.10.RELEASE (Java 17), SpringDoc 2.7.0, Flyway 12.0.0, FastAPI, SQLAlchemy 2.0.46, Alembic 1.18.3, Redis 8.4, SQLite 3.51.2.
 - API conventions: REST + JSON under /api, RFC 7807 Problem Details for errors; expose /api/health and /api/metrics via Actuator.
 - ML service must expose a basic health endpoint (HTTP 200) for docker-compose checks.
 
@@ -71,7 +69,7 @@ so that the system can run locally with baseline services.
 ### Library and Framework Requirements
 
 - Frontend scaffold: `npm create vite@latest` with the react-ts template in frontend/. Vite current homepage lists v7.3.1; keep to architecture-approved versions and lock dependencies.
-- API scaffold: Spring Initializr with bootVersion 4.0.2.RELEASE, Java 17, Gradle, dependencies web, validation, data-jdbc, actuator; add SpringDoc 3.0.1 and Micrometer 1.16.2.
+- API scaffold: Spring Initializr with bootVersion 3.5.10.RELEASE, Java 17, Gradle, dependencies web, validation, data-jdbc, actuator; add SpringDoc 2.7.0 and Micrometer 1.16.2.
 - ML scaffold: Python 3 with `pip install "fastapi[standard]"`; use FastAPI CLI (`fastapi dev`) for local health checks.
 - Redis container: Redis 8.4 for Streams; reachable by api and ml via docker-compose service name.
 
@@ -85,7 +83,7 @@ so that the system can run locally with baseline services.
 ### Latest Technical Notes
 
 - Vite homepage lists v7.3.1; use `npm create vite@latest` and lock versions per architecture (do not upgrade React Router or TanStack Query versions).
-- Spring Boot project page lists 4.0.2; keep bootVersion 4.0.2.RELEASE as specified in architecture.
+- Spring Boot project page lists 3.5.10; keep bootVersion 3.5.10.RELEASE as specified in architecture.
 - FastAPI docs recommend `pip install "fastapi[standard]"` and `fastapi dev` for local run.
 
 ### Project Context Reference
@@ -120,10 +118,10 @@ openai/gpt-5.2-codex
 ### Debug Log References
 
 - Validation workflow file not found: _bmad/core/tasks/validate-workflow.xml
-- API build failed: Spring Boot Gradle plugin 4.0.2.RELEASE not found in plugin portal.
+- API build failed: Spring Boot Gradle plugin 3.5.10.RELEASE not found in plugin portal.
 - API build failed: Spring Boot Gradle plugin 3.5.10.RELEASE not found in plugin portal.
 - docker compose up failed: Docker daemon not running.
-- API bootRun failed: springdoc 3.0.1 depends on Spring Boot 4.0.1 modules.
+- API bootRun failed: springdoc 2.7.0 depends on Spring Boot 4.0.1 modules.
 - API bootRun failed: missing datasource driver; excluded JDBC auto-config for scaffold.
 
 ### Completion Notes List

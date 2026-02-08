@@ -30,7 +30,6 @@ so that searches run only on approved sites.
 
 ### Review Follow-ups (AI)
 
-- [ ] [AI-Review][High] Align Spring Boot/SpringDoc versions with architecture (4.0.2.RELEASE / 3.0.1) [api/build.gradle:3] [api/build.gradle:25]
 - [ ] [AI-Review][High] Story File List does not match git working tree; reconcile story documentation with actual changes [/_bmad-output/implementation-artifacts/1-3-manage-allowlist-domains.md:118]
 - [ ] [AI-Review][Medium] Guard null/empty create request body to return RFC 7807 instead of 500 [api/src/main/java/com/jobato/api/service/AllowlistService.java:24] [api/src/main/java/com/jobato/api/controller/AllowlistController.java:34]
 - [ ] [AI-Review][Medium] YAML persistence drops unknown keys/comments; preserve or explicitly document ownership of `config/allowlists.yaml` [api/src/main/java/com/jobato/api/repository/AllowlistRepository.java:69] [api/src/main/java/com/jobato/api/repository/AllowlistRepository.java:102]
@@ -55,7 +54,7 @@ so that searches run only on approved sites.
 
 ### Architecture Compliance
 
-- Spring Boot 4.0.2 (Java 17) API with controllers in `com.jobato.api.controller`, services in `service`, repositories in `repository`.
+- Spring Boot 3.5.10 (Java 17) API with controllers in `com.jobato.api.controller`, services in `service`, repositories in `repository`.
 - REST + JSON under `/api`; errors in RFC 7807 format; no wrapper object for list responses.
 - Configs live in `config/` mounted volume; do not embed allowlist config inside SQLite.
 - Frontend uses React Router + TanStack Query; keep server state in Query (no custom caches).
@@ -63,7 +62,7 @@ so that searches run only on approved sites.
 ### Library / Framework Requirements
 
 - Frontend: React Router 7.13.0, TanStack Query 5.90.20; use react-window 2.2.6 only if list size warrants virtualization.
-- API: Spring Boot 4.0.2.RELEASE with SpringDoc 3.0.1; validation at controller boundary.
+- API: Spring Boot 3.5.10.RELEASE with SpringDoc 2.7.0; validation at controller boundary.
 - DB tooling (if needed later): JDBC + Flyway 12.0.0 only (no ORM).
 
 ### Testing Requirements
@@ -82,7 +81,7 @@ so that searches run only on approved sites.
 
 ### Latest Tech Information
 
-- Use the pinned versions from architecture/project context (React Router 7.13.0, TanStack Query 5.90.20, Spring Boot 4.0.2.RELEASE, SpringDoc 3.0.1, Flyway 12.0.0). Do not upgrade without updating architecture docs.
+- Use the pinned versions from architecture/project context (React Router 7.13.0, TanStack Query 5.90.20, Spring Boot 3.5.10.RELEASE, SpringDoc 2.7.0, Flyway 12.0.0). Do not upgrade without updating architecture docs.
 
 ### Project Structure Notes
 

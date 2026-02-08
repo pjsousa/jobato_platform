@@ -21,8 +21,8 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - React Router: 7.13.0
 - TanStack Query: 5.90.20
 - react-window: 2.2.6
-- API: Spring Boot 4.0.2.RELEASE (Java 17)
-- OpenAPI: SpringDoc 3.0.1
+- API: Spring Boot 3.5.10.RELEASE (Java 17)
+- OpenAPI: SpringDoc 2.7.0
 - DB migrations: Flyway 12.0.0
 - ML API: FastAPI (Python 3)
 - ML data layer: SQLAlchemy 2.0.46 + Alembic 1.18.3

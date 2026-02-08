@@ -62,7 +62,7 @@ so that each run executes per-site searches.
 
 ### Library / Framework Requirements
 
-- API: Spring Boot 4.0.2.RELEASE (Java 17) with ProblemDetail for validation errors.
+- API: Spring Boot 3.5.10.RELEASE (Java 17) with ProblemDetail for validation errors.
 - Do not add new libraries for YAML parsing; reuse the existing config parsing approach from queries/allowlists.
 
 ### File Structure Requirements
@@ -92,7 +92,7 @@ so that each run executes per-site searches.
 
 ### Latest Tech Information
 
-- Spring Boot GitHub releases list `v4.0.2` as the latest release (Jan 22, 2026); keep the project pinned to 4.0.2.RELEASE unless architecture updates. [Source: https://github.com/spring-projects/spring-boot]
+- Spring Boot GitHub releases list `v3.5.10` as the latest release (Jan 22, 2026); keep the project pinned to 3.5.10.RELEASE unless architecture updates. [Source: https://github.com/spring-projects/spring-boot]
 - FastAPI release notes list `0.128.4` as the latest release; no upgrade planned without architecture change. [Source: https://fastapi.tiangolo.com/release-notes/]
 - Redis release notes show Redis Open Source `v8.6.0` (Jan 2026) and `v8.4.0` (Nov 2025). Project pins 8.4; keep until architecture updates. [Source: https://redis.io/docs/latest/operate/oss_and_stack/stack-with-enterprise/release-notes/]
 - React Router changelog shows `v7.13.0` (Jan 23, 2026), matching the pinned version. [Source: https://reactrouter.com/start/start/changelog]

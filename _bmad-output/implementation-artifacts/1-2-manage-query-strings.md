@@ -70,7 +70,7 @@ so that I can control the job searches I care about.
 ### Library and Framework Requirements
 
 - Frontend uses React Router 7.13.0 and TanStack Query 5.90.20 for server state; no ad-hoc caching.
-- API uses Spring Boot 4.0.2.RELEASE (Java 17) with SpringDoc 3.0.1; use ProblemDetail for RFC 7807 error responses.
+- API uses Spring Boot 3.5.10.RELEASE (Java 17) with SpringDoc 2.7.0; use ProblemDetail for RFC 7807 error responses.
 - Keep react-window 2.2.6 available for long lists if needed, but do not add extra UI libraries unless required.
 
 ### Testing and Verification Requirements

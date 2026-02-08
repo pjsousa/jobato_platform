@@ -93,7 +93,7 @@ Full-stack web application with a SPA frontend, a Java Spring API, and a Python 
 npm create vite@latest jobato-frontend -- --template react-ts
 
 # API (Spring Boot via Spring Initializr, Java 17, Gradle)
-curl -L "https://start.spring.io/starter.zip?type=gradle-project&language=java&bootVersion=4.0.2.RELEASE&javaVersion=17&dependencies=web,validation,data-jdbc&name=jobato-api&packageName=com.jobato.api&baseDir=jobato-api" -o jobato-api.zip
+curl -L "https://start.spring.io/starter.zip?type=gradle-project&language=java&bootVersion=3.5.10.RELEASE&javaVersion=17&dependencies=web,validation,data-jdbc&name=jobato-api&packageName=com.jobato.api&baseDir=jobato-api" -o jobato-api.zip
 
 # ML/Data service (FastAPI)
 python -m venv .venv
@@ -141,7 +141,7 @@ pip install "fastapi[standard]"
 **Important Decisions (Shape Architecture):**
 - Data access tooling: JDBC + Flyway 12.0.0 for API; SQLAlchemy 2.0.46 + Alembic 1.18.3 for ML.
 - Authentication & security: no UI auth in MVP; ML → API API key; HTTPS for browser → API; OS disk encryption.
-- API conventions: REST + JSON; OpenAPI docs (SpringDoc 3.0.1 + FastAPI built-ins); RFC 7807 error format.
+- API conventions: REST + JSON; OpenAPI docs (SpringDoc 2.7.0 + FastAPI built-ins); RFC 7807 error format.
 - Frontend architecture: React Router 7.13.0; TanStack Query 5.90.20 for server state; react-window 2.2.6 for list virtualization; feature-based structure.
 - Monitoring/logging: structured JSON logs + health endpoints; metrics via Spring Boot Actuator + Micrometer 1.16.2 and Python prometheus-client 0.24.1.
 
@@ -174,7 +174,7 @@ pip install "fastapi[standard]"
 ### API & Communication Patterns
 
 - **API style:** REST + JSON.
-- **Docs:** OpenAPI with SpringDoc 3.0.1 + FastAPI built-in docs.
+- **Docs:** OpenAPI with SpringDoc 2.7.0 + FastAPI built-in docs.
 - **Errors:** RFC 7807 Problem Details.
 - **Rate limiting:** none for MVP.
 - **Service communication:** Redis Streams on Redis Open Source 8.4; at-least-once delivery with idempotent consumers and consumer groups.

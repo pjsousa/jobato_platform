@@ -5,7 +5,7 @@ Jobato is a daily, personalized job discovery tool for senior and lead software 
 ## Tech Stack
 
 - Frontend: Vite + React + TypeScript, React Router 7.13.0, TanStack Query 5.90.20, react-window 2.2.6
-- API: Spring Boot 4.0.2.RELEASE (Java 17), SpringDoc 3.0.1, Flyway 12.0.0, Micrometer 1.16.2
+- API: Spring Boot 3.5.10.RELEASE (Java 17), SpringDoc 2.7.0, Flyway 12.0.0, Micrometer 1.16.2
 - ML: FastAPI (Python 3), SQLAlchemy 2.0.46, Alembic 1.18.3, prometheus-client 0.24.1
 - Data and Messaging: SQLite 3.51.2, Redis Streams (Redis 8.4)
 
