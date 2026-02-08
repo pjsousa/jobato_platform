@@ -1,6 +1,6 @@
 # Story 1.4: Generate per-site query combinations
 
-Status: ready-for-dev
+Status: in-progress
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -18,18 +18,26 @@ so that each run executes per-site searches.
 
 ## Tasks / Subtasks
 
-- [ ] Define the per-site query combination model and ordering rules (AC: 1, 2)
-  - [ ] Confirm normalized inputs from `config/queries.yaml` and `config/allowlists.yaml` (reuse Story 1.2/1.3 rules).
-  - [ ] Decide deterministic ordering (queries order first, then allowlist order) and dedupe strategy after normalization.
-- [ ] API: implement a `RunInputService` to build enabled combinations (AC: 1, 2, 3)
-  - [ ] Load enabled queries and allowlists from their repositories; apply normalization and filtering.
-  - [ ] Generate `searchQuery` using `site:<domain> <queryText>` while retaining raw query/domain fields.
-  - [ ] Validate empty enabled inputs and throw RFC 7807 Problem Detail with errorCode `NO_ENABLED_INPUTS`.
-- [ ] Wiring: expose combinations to run initiation (AC: 1, 2, 3)
-  - [ ] `RunService` (Story 2.1) should call `RunInputService` before publishing `run.requested`.
-  - [ ] Prefer including combinations in the event payload so ML does not re-read config files.
-- [ ] Tests: add service-level unit tests (AC: 1, 2, 3)
-  - [ ] Enabled/disabled filtering, empty inputs error, duplicate normalization, deterministic ordering.
+- [x] Define the per-site query combination model and ordering rules (AC: 1, 2)
+  - [x] Confirm normalized inputs from `config/queries.yaml` and `config/allowlists.yaml` (reuse Story 1.2/1.3 rules).
+  - [x] Decide deterministic ordering (queries order first, then allowlist order) and dedupe strategy after normalization.
+- [x] API: implement a `RunInputService` to build enabled combinations (AC: 1, 2, 3)
+  - [x] Load enabled queries and allowlists from their repositories; apply normalization and filtering.
+  - [x] Generate `searchQuery` using `site:<domain> <queryText>` while retaining raw query/domain fields.
+  - [x] Validate empty enabled inputs and throw RFC 7807 Problem Detail with errorCode `NO_ENABLED_INPUTS`.
+- [x] Wiring: expose combinations to run initiation (AC: 1, 2, 3)
+  - [x] `RunService` (Story 2.1) should call `RunInputService` before publishing `run.requested`.
+  - [x] Prefer including combinations in the event payload so ML does not re-read config files.
+- [x] Tests: add service-level unit tests (AC: 1, 2, 3)
+  - [x] Enabled/disabled filtering, empty inputs error, duplicate normalization, deterministic ordering.
+
+### Review Follow-ups (AI)
+
+- [ ] [AI-Review][High] Wire run initiation to include run inputs when publishing `run.requested`; current service only builds a payload [api/src/main/java/com/jobato/api/service/RunService.java:17]
+- [ ] [AI-Review][High] Add test coverage for empty enabled domains (AC3) so NO_ENABLED_INPUTS is raised when allowlists are empty [api/src/test/java/com/jobato/api/service/RunInputServiceTest.java:95]
+- [ ] [AI-Review][High] Reconcile story File List with git working tree; story lists changes but git is clean [_bmad-output/implementation-artifacts/1-4-generate-per-site-query-combinations.md:173]
+- [ ] [AI-Review][Medium] Guard against empty/invalid domains after normalization to avoid `site:` with blank domain [api/src/main/java/com/jobato/api/service/RunInputNormalizer.java:52]
+- [ ] [AI-Review][Medium] Add ProblemDetail handling for `QueryValidationException` to avoid 500s on invalid config inputs [api/src/main/java/com/jobato/api/service/RunInputNormalizer.java:31] [api/src/main/java/com/jobato/api/controller/RunInputExceptionHandler.java:15]
 
 ## Dev Notes
 
@@ -125,8 +133,8 @@ so that each run executes per-site searches.
 
 ### Story Completion Status
 
-- Status: ready-for-dev
-- Completion note: Ultimate context engine analysis completed - comprehensive developer guide created.
+- Status: in-progress
+- Completion note: Review found issues; see Review Follow-ups (AI).
 
 ### Open Questions
 
@@ -144,13 +152,47 @@ openai/gpt-5.2-codex
 
 - create-story workflow (CS 1.4, yolo)
 - Validation workflow file missing: `/_bmad/core/tasks/validate-workflow.xml`
+- Tests: `./gradlew test --tests "com.jobato.api.service.RunInputNormalizerTest"` (api)
+- Tests: `./gradlew test` (api)
+- Tests: `./gradlew test --tests "com.jobato.api.service.RunInputServiceTest"` (api)
+- Tests: `./gradlew test` (api)
+- Tests: `./gradlew test --tests "com.jobato.api.service.RunServiceTest"` (api)
+- Tests: `./gradlew test` (api)
+- Tests: `./gradlew test --tests "com.jobato.api.service.RunInputServiceTest"` (api)
+- Tests: `./gradlew test` (api)
+- Tests: `./gradlew test` (api)
+
+### Implementation Plan
+
+- Introduce RunInput DTO and normalization helper for enabled query/domain dedupe with stable ordering.
+- Build RunInputService to assemble combinations with RFC 7807 error handling for empty inputs.
+- Add RunService wiring to expose run inputs in a run.requested payload DTO.
+- Expand RunInputService tests to cover filtering, dedupe, ordering, and empty-input errors.
 ### Completion Notes List
 
 - Story drafted from epics, PRD, architecture, UX, and project-context sources.
 - Previous story and git history reviewed for constraints and patterns.
 - Latest tech versions checked against official release notes.
 - Ultimate context engine analysis completed - comprehensive developer guide created.
+- Added RunInput DTO plus normalization helper for enabled query/domain dedupe and ordering; added unit tests for normalization.
+- Implemented RunInputService for per-site combinations with ProblemDetail error handling and service-level test.
+- Added RunService payload wiring so run initiation can include run inputs without re-reading config.
+- Added RunInputService coverage for filtering, dedupe, deterministic ordering, and empty input errors.
 ### File List
 
 - `/_bmad-output/implementation-artifacts/1-4-generate-per-site-query-combinations.md`
 - `/_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `api/src/main/java/com/jobato/api/dto/RunInput.java`
+- `api/src/main/java/com/jobato/api/dto/RunRequestedPayload.java`
+- `api/src/main/java/com/jobato/api/controller/RunInputExceptionHandler.java`
+- `api/src/main/java/com/jobato/api/service/NoEnabledInputsException.java`
+- `api/src/main/java/com/jobato/api/service/RunInputService.java`
+- `api/src/main/java/com/jobato/api/service/RunInputNormalizer.java`
+- `api/src/main/java/com/jobato/api/service/RunService.java`
+- `api/src/test/java/com/jobato/api/service/RunInputServiceTest.java`
+- `api/src/test/java/com/jobato/api/service/RunInputNormalizerTest.java`
+- `api/src/test/java/com/jobato/api/service/RunServiceTest.java`
+
+### Change Log
+
+- 2026-02-08: Implemented run input combinations, run request payload wiring, and service tests for Story 1.4.
