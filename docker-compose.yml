@@ -20,6 +20,12 @@ services:
       - "8080:8080"
     depends_on:
       - redis
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/api/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 20s
 
   ml:
     build:
@@ -37,6 +43,12 @@ services:
       - "8000:8000"
     depends_on:
       - redis
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
 
   frontend:
     build:
