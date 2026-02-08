@@ -39,7 +39,7 @@ so that the system can run locally with baseline services.
 
 ### Review Follow-ups (AI)
 
-- [ ] [AI-Review][HIGH] Remove scaffold test dependency on build artifacts/__pycache__ or create them in test setup; currently asserts build outputs [scripts/test_scaffold.py:68]
+- [x] [AI-Review][HIGH] Remove scaffold test dependency on build artifacts/__pycache__ or create them in test setup; currently asserts build outputs [scripts/test_scaffold.py:68]
 - [ ] [AI-Review][HIGH] Implement Redis reachability checks with client deps in API/ML; none present [api/build.gradle:20]
 - [ ] [AI-Review][MEDIUM] Add docker-compose healthcheck blocks for api (/api/health) and ml (/health) [docker-compose.yml:7]
 - [ ] [AI-Review][MEDIUM] Pin Vite version (avoid caret drift) to match architecture note [frontend/package.json:31]

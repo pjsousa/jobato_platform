@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from pathlib import Path
 import unittest
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -72,9 +72,6 @@ class TestScaffoldLayout(unittest.TestCase):
         libs_dir = ROOT / "api/build/libs"
         jars = list(libs_dir.glob("*.jar")) if libs_dir.is_dir() else []
         self.assertTrue(jars)
-
-    def test_ml_compile_output(self) -> None:
-        self.assertTrue((ROOT / "ml/app/__pycache__").is_dir())
 
 
 if __name__ == "__main__":
