@@ -1,6 +1,6 @@
 # Story 2.1: Manual run request and lifecycle tracking
 
-Status: review
+Status: in-progress
 Story Key: 2-1-manual-run-request-and-lifecycle-tracking
 Epic: 2 - Run and Capture Results
 
@@ -37,6 +37,16 @@ so that I know when a run starts, finishes, or fails.
   - [x] Add API tests for run trigger, run-in-progress error, and event consumption
   - [x] Add ML tests for event publishing format
   - [x] Add frontend tests for run status and error states
+
+### Review Follow-ups (AI)
+
+- [ ] [AI-Review][High] Implement run summary metrics + API response fields; summary bar still placeholders and no API support. `frontend/src/features/runs/components/RunStatus.tsx:40` `api/src/main/java/com/jobato/api/controller/RunController.java:22` `api/src/main/java/com/jobato/api/dto/RunResponse.java:3`
+- [ ] [AI-Review][High] Fix story documentation mismatch: File List claims changes but git shows no modified files; reconcile story with repo state. `/_bmad-output/implementation-artifacts/2-1-manual-run-request-and-lifecycle-tracking.md:150`
+- [ ] [AI-Review][Medium] Make run-in-progress guard atomic to prevent concurrent POSTs creating multiple running runs (transactional lock/DB constraint). `api/src/main/java/com/jobato/api/service/RunService.java:38` `api/src/main/java/com/jobato/api/repository/RunRepository.java:39`
+- [ ] [AI-Review][Medium] Update Redis Streams consumption to use consumer groups + last delivered ID; current config replays from 0-0. `api/src/main/java/com/jobato/api/config/RunEventStreamConfig.java:32`
+- [ ] [AI-Review][Medium] Align SQLite JDBC version to architecture (3.51.2). `api/build.gradle:29`
+- [ ] [AI-Review][Low] Add RFC 7807 `type` URI to problem responses for consistency. `api/src/main/java/com/jobato/api/controller/RunExceptionHandler.java:16`
+- [ ] [AI-Review][Low] Extend tests to assert run.requested envelope fields/stream usage. `api/src/test/java/com/jobato/api/controller/RunControllerTest.java:92`
 
 ## Dev Notes
 
