@@ -24,7 +24,8 @@ class ApiError extends Error {
   }
 }
 
-const baseUrl = '/api/allowlists'
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api').replace(/\/$/, '')
+const baseUrl = `${API_BASE_URL}/allowlists`
 
 const parseProblem = async (response: Response): Promise<ApiProblem | undefined> => {
   try {
