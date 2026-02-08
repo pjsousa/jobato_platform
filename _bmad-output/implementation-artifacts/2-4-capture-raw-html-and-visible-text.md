@@ -108,6 +108,12 @@ openai/gpt-5.2-codex
 ### Completion Notes List
 
 - Story context generated and sprint-status updated to ready-for-dev.
+- All acceptance criteria implemented successfully
+- Raw HTML captured and stored in data/html/raw/ directory
+- Visible text extracted and stored with results
+- Per-result error handling implemented without aborting entire run
+- Database schema updated with new HTML-related fields
+- Unit tests added for new functionality
 
 ### File List
 
