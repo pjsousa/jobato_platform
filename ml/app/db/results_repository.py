@@ -34,6 +34,10 @@ class ResultRepository:
             final_url=result.final_url,
             created_at=created_at,
             updated_at=updated_at,
+            raw_html_path=result.raw_html_path,
+            visible_text=result.visible_text,
+            fetch_error=result.fetch_error,
+            extract_error=result.extract_error,
         )
 
 

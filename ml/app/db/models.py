@@ -22,3 +22,7 @@ class RunResult(Base):
     final_url: Mapped[str] = mapped_column(String, nullable=False)
     created_at: Mapped[str] = mapped_column(String, nullable=False)
     updated_at: Mapped[str] = mapped_column(String, nullable=False)
+    raw_html_path: Mapped[str | None] = mapped_column(String, nullable=True)
+    visible_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    fetch_error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    extract_error: Mapped[str | None] = mapped_column(Text, nullable=True)

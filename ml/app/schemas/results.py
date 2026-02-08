@@ -23,3 +23,7 @@ class ResultMetadata:
     final_url: str
     created_at: datetime
     updated_at: datetime
+    raw_html_path: str | None = None
+    visible_text: str | None = None
+    fetch_error: str | None = None
+    extract_error: str | None = None
