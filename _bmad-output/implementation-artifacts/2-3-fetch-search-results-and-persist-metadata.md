@@ -1,6 +1,6 @@
 # Story 2.3: Fetch search results and persist metadata
 
-Status: review
+Status: in-progress
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -33,6 +33,16 @@ so that I can review job opportunities found in the run.
   - [x] Unit tests for google_search client call count and runId association.
   - [x] Unit tests for redirect resolver and 404 skip behavior.
   - [x] Persistence test for result records linked to runId.
+
+### Review Follow-ups (AI)
+
+- [ ] [AI-Review][HIGH] Wire run orchestration to execute query x domain ingestion per run (AC1 not wired to run). [ml/app/pipelines/run_pipeline.py:21]
+- [ ] [AI-Review][HIGH] Persist search_query (and query_id if needed) in result metadata/schema to meet required fields. [ml/app/schemas/results.py:15]
+- [ ] [AI-Review][HIGH] Reconcile story File List with git reality; story lists changes but repo is clean. [_bmad-output/implementation-artifacts/2-3-fetch-search-results-and-persist-metadata.md:118]
+- [ ] [AI-Review][MEDIUM] Replace bespoke YAML parsing with a proper YAML loader to avoid misparsing quoted/complex values. [ml/app/pipelines/ingestion.py:244]
+- [ ] [AI-Review][MEDIUM] Stop using runtime `create_all`; use Alembic migrations to enforce schema/indexes. [ml/app/db/session.py:11]
+- [ ] [AI-Review][MEDIUM] Handle network failures/timeouts in search + fetcher and map to run.failed/logging. [ml/app/services/google_search.py:59]
+- [ ] [AI-Review][LOW] Strengthen persistence tests to assert all required metadata fields (query text, domain, title, snippet, timestamps). [ml/tests/test_results_persistence.py:12]
 
 ## Dev Notes
 
