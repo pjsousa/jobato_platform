@@ -28,6 +28,16 @@ public class ActiveRunDatabase {
           status_reason TEXT
         )
         """;
+    private static final String CREATE_RUN_SUMMARIES_TABLE = """
+        CREATE TABLE IF NOT EXISTS run_summaries (
+          run_id TEXT PRIMARY KEY,
+          trigger_time TEXT NOT NULL,
+          duration_ms INTEGER NOT NULL,
+          new_jobs_count INTEGER NOT NULL,
+          relevant_count INTEGER NOT NULL,
+          status TEXT NOT NULL
+        )
+        """;
     private static final String STATUS_REASON_COLUMN = "status_reason";
     private static final String ADD_STATUS_REASON_COLUMN = "ALTER TABLE runs ADD COLUMN status_reason TEXT";
     private static final String CREATE_STATUS_INDEX =
@@ -93,6 +103,7 @@ public class ActiveRunDatabase {
             }
             try (Statement statement = connection.createStatement()) {
                 statement.execute(CREATE_RUNS_TABLE);
+                statement.execute(CREATE_RUN_SUMMARIES_TABLE);
                 statement.execute(CREATE_STATUS_INDEX);
                 if (!columnExists(connection, "runs", STATUS_REASON_COLUMN)) {
                     statement.execute(ADD_STATUS_REASON_COLUMN);

@@ -27,25 +27,25 @@ so that I can understand run outcomes and tune inputs.
 
 ## Tasks / Subtasks
 
-- [ ] Compute and persist run summary metrics (AC: 1, 3)
-  - [ ] Capture triggerTime and completion time; compute duration in milliseconds and overall status
-  - [ ] Derive newJobsCount from results created for the run; relevantCount defaults to 0 when no labels exist
-  - [ ] Persist metrics in SQLite with runId as the key (runs table or run_summary table)
-  - [ ] Emit metrics in `run.completed`/`run.failed` events for API consumption
-- [ ] Log zero-result queries per run (AC: 2)
-  - [ ] Record query text, domain, runId, and occurredAt whenever a query x domain yields zero results
-  - [ ] Persist zero-result logs in SQLite with a runId foreign key and index for run lookups
-- [ ] Expose latest run summary via API (AC: 1, 3)
-  - [ ] Extend `ReportsController` with a latest run summary endpoint (or `GET /api/reports/runs` latest query)
-  - [ ] Return runId, status, triggerTime, durationMs, newJobsCount, relevantCount in camelCase JSON
-  - [ ] Use RFC 7807 Problem Details for error responses
-- [ ] Update run summary UI (FR35 / UX) (AC: 1, 3)
-  - [ ] Fetch latest run summary via TanStack Query and render in the Run Summary Bar
-  - [ ] Include last run time, new count, relevant count, and status messaging
-- [ ] Add targeted tests (AC: 1-3)
-  - [ ] ML tests for zero-result detection and summary metric calculations
-  - [ ] API tests for latest run summary response shape and status handling
-  - [ ] Frontend tests for run summary bar rendering (if UI implemented)
+- [x] Compute and persist run summary metrics (AC: 1, 3)
+  - [x] Capture triggerTime and completion time; compute duration in milliseconds and overall status
+  - [x] Derive newJobsCount from results created for the run; relevantCount defaults to 0 when no labels exist
+  - [x] Persist metrics in SQLite with runId as the key (runs table or run_summary table)
+  - [x] Emit metrics in `run.completed`/`run.failed` events for API consumption
+- [x] Log zero-result queries per run (AC: 2)
+  - [x] Record query text, domain, runId, and occurredAt whenever a query x domain yields zero results
+  - [x] Persist zero-result logs in SQLite with a runId foreign key and index for run lookups
+- [x] Expose latest run summary via API (AC: 1, 3)
+  - [x] Extend `ReportsController` with a latest run summary endpoint (or `GET /api/reports/runs` latest query)
+  - [x] Return runId, status, triggerTime, durationMs, newJobsCount, relevantCount in camelCase JSON
+  - [x] Use RFC 7807 Problem Details for error responses
+- [x] Update run summary UI (FR35 / UX) (AC: 1, 3)
+  - [x] Fetch latest run summary via TanStack Query and render in the Run Summary Bar
+  - [x] Include last run time, new count, relevant count, and status messaging
+- [x] Add targeted tests (AC: 1-3)
+  - [x] ML tests for zero-result detection and summary metric calculations
+  - [x] API tests for latest run summary response shape and status handling
+  - [x] Frontend tests for run summary bar rendering (if UI implemented)
 
 ## Dev Notes
 
