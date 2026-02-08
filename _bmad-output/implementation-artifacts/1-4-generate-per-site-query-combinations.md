@@ -1,6 +1,6 @@
 # Story 1.4: Generate per-site query combinations
 
-Status: review
+Status: in-progress
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -30,6 +30,14 @@ so that each run executes per-site searches.
   - [x] Prefer including combinations in the event payload so ML does not re-read config files.
 - [x] Tests: add service-level unit tests (AC: 1, 2, 3)
   - [x] Enabled/disabled filtering, empty inputs error, duplicate normalization, deterministic ordering.
+
+### Review Follow-ups (AI)
+
+- [ ] [AI-Review][High] Wire run initiation to include run inputs when publishing `run.requested`; current service only builds a payload [api/src/main/java/com/jobato/api/service/RunService.java:17]
+- [ ] [AI-Review][High] Add test coverage for empty enabled domains (AC3) so NO_ENABLED_INPUTS is raised when allowlists are empty [api/src/test/java/com/jobato/api/service/RunInputServiceTest.java:95]
+- [ ] [AI-Review][High] Reconcile story File List with git working tree; story lists changes but git is clean [_bmad-output/implementation-artifacts/1-4-generate-per-site-query-combinations.md:173]
+- [ ] [AI-Review][Medium] Guard against empty/invalid domains after normalization to avoid `site:` with blank domain [api/src/main/java/com/jobato/api/service/RunInputNormalizer.java:52]
+- [ ] [AI-Review][Medium] Add ProblemDetail handling for `QueryValidationException` to avoid 500s on invalid config inputs [api/src/main/java/com/jobato/api/service/RunInputNormalizer.java:31] [api/src/main/java/com/jobato/api/controller/RunInputExceptionHandler.java:15]
 
 ## Dev Notes
 
@@ -125,8 +133,8 @@ so that each run executes per-site searches.
 
 ### Story Completion Status
 
-- Status: review
-- Completion note: Implementation complete; ready for review.
+- Status: in-progress
+- Completion note: Review found issues; see Review Follow-ups (AI).
 
 ### Open Questions
 
