@@ -27,16 +27,16 @@ so that the system can analyze and display content later.
 
 ## Tasks / Subtasks
 
-- [ ] Persist raw HTML to file storage under `data/html/raw/` using deterministic, filesystem-safe naming (e.g., runId/resultId or URL hash).
-  - [ ] Store the raw HTML path on the result record.
-  - [ ] Ensure UTF-8 encoding and do not store HTML in SQLite.
-- [ ] Extract visible text from saved HTML and persist it with the result record.
-  - [ ] Use ML ingestion boundaries in `ml/app/pipelines/ingestion.py` and fetching logic in `ml/app/services/fetcher.py`.
-  - [ ] Keep extraction resilient to malformed HTML (record error per result).
-- [ ] Record per-result fetch/extraction errors without aborting the run.
-  - [ ] Error fields should be stored with the result record or a dedicated error table.
-- [ ] Update ML data models and migrations for new fields (raw_html_path, visible_text, fetch_error).
-- [ ] Add unit tests in `ml/tests/` covering HTML persistence, text extraction, and error handling.
+- [x] Persist raw HTML to file storage under `data/html/raw/` using deterministic, filesystem-safe naming (e.g., runId/resultId or URL hash).
+  - [x] Store the raw HTML path on the result record.
+  - [x] Ensure UTF-8 encoding and do not store HTML in SQLite.
+- [x] Extract visible text from saved HTML and persist it with the result record.
+  - [x] Use ML ingestion boundaries in `ml/app/pipelines/ingestion.py` and fetching logic in `ml/app/services/fetcher.py`.
+  - [x] Keep extraction resilient to malformed HTML (record error per result).
+- [x] Record per-result fetch/extraction errors without aborting the run.
+  - [x] Error fields should be stored with the result record or a dedicated error table.
+- [x] Update ML data models and migrations for new fields (raw_html_path, visible_text, fetch_error).
+- [x] Add unit tests in `ml/tests/` covering HTML persistence, text extraction, and error handling.
 
 ## Dev Notes
 
