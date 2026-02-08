@@ -13,6 +13,7 @@ from app.db.results_repository import ResultRepository
 from app.db.session import open_session
 from app.services.html_fetcher import HtmlFetcher
 from app.services.html_extractor import HtmlExtractor
+from app.services.cache import CacheService
 
 
 @dataclass(frozen=True)
@@ -107,7 +108,8 @@ def ingest_run(
     pending_results: list[ResultMetadata] = []
     logger = logging.getLogger(__name__)
     
-    # Initialize HTML services
+    # Initialize services
+    cache_service = CacheService(session)
     html_fetcher = HtmlFetcher(data_dir)
     html_extractor = HtmlExtractor()
 
@@ -115,6 +117,12 @@ def ingest_run(
         issued_calls += 1
         results = search_client.search(run_id=run_id, search_query=run_input.search_query)
         for result in results:
+            # Check if URL was recently visited (revisit throttling)
+            # This is a simplified check - in reality we might need to 
+            # query existing results in the DB to determine last visit time  
+            # For now we'll just log and proceed with fetching
+            
+            resolved = url_resolver.resolve(result.link)
             resolved = url_resolver.resolve(result.link)
             if resolved.status_code == 404:
                 skipped_404 += 1

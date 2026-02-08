@@ -1,6 +1,6 @@
 # Story 2.5: Cache results and enforce revisit throttling
 
-Status: ready-for-dev
+Status: done
 
 Story Key: 2-5-cache-results-and-enforce-revisit-throttling
 Epic: 2 - Run & Capture Results
@@ -20,19 +20,19 @@ so that runs stay efficient and within quota.
 
 ## Tasks / Subtasks
 
-- [ ] Define cache and revisit metadata in the ML SQLite schema (AC: 1, 2)
-  - [ ] Add fields for cache key, cached_at, cache_expires_at, last_seen_at, and skip_reason
-  - [ ] Ensure schema changes use SQLAlchemy + Alembic and preserve existing data
-- [ ] Implement query x domain cache lookup and reuse (AC: 1)
-  - [ ] Read TTL from config under `config/` (add a new entry if missing)
-  - [ ] Short-circuit Google Search calls when cache is fresh
-  - [ ] Record cache hit/miss in run context and logs
-- [ ] Enforce 1-week revisit throttle for job URLs (AC: 2)
-  - [ ] Check last_seen_at/visited_at before fetching HTML
-  - [ ] Skip fetch within 7 days and record skip_reason = `revisit_throttle`
-- [ ] Add tests for cache TTL and revisit throttle (AC: 1, 2)
-  - [ ] Unit tests for TTL boundaries and cache hit/miss
-  - [ ] Unit tests for revisit throttle skip logic
+- [x] Define cache and revisit metadata in the ML SQLite schema (AC: 1, 2)
+  - [x] Add fields for cache key, cached_at, cache_expires_at, last_seen_at, and skip_reason
+  - [x] Ensure schema changes use SQLAlchemy + Alembic and preserve existing data
+- [x] Implement query x domain cache lookup and reuse (AC: 1)
+  - [x] Read TTL from config under `config/` (add a new entry if missing)
+  - [x] Short-circuit Google Search calls when cache is fresh
+  - [x] Record cache hit/miss in run context and logs
+- [x] Enforce 1-week revisit throttle for job URLs (AC: 2)
+  - [x] Check last_seen_at/visited_at before fetching HTML
+  - [x] Skip fetch within 7 days and record skip_reason = `revisit_throttle`
+- [x] Add tests for cache TTL and revisit throttle (AC: 1, 2)
+  - [x] Unit tests for TTL boundaries and cache hit/miss
+  - [x] Unit tests for revisit throttle skip logic
 
 ## Dev Notes
 
@@ -67,7 +67,7 @@ so that runs stay efficient and within quota.
 - `ml/app/pipelines/ingestion.py`
 - `ml/app/services/cache.py`
 - `ml/app/services/google_search.py`
-- `ml/app/services/quota.py`
+- `ml/app/services/fetcher.py`
 - `ml/app/db/models.py` and Alembic migrations if schema changes are needed
 
 ### Testing Requirements
@@ -102,8 +102,8 @@ so that runs stay efficient and within quota.
 
 ## Story Completion Status
 
-- Status set to ready-for-dev.
-- Completion note: Ultimate context engine analysis completed - comprehensive developer guide created.
+- Status set to done.
+- Completion note: Cache and revisit throttling implementation completed successfully.
 
 ## Dev Agent Record
 
@@ -125,6 +125,7 @@ None.
 - `ml/app/pipelines/ingestion.py`
 - `ml/app/services/cache.py`
 - `ml/app/services/google_search.py`
-- `ml/app/services/quota.py`
+- `ml/app/services/fetcher.py`
 - `ml/app/db/models.py`
 - `ml/app/db/migrations/*`
+

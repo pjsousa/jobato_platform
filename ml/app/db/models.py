@@ -26,3 +26,8 @@ class RunResult(Base):
     visible_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     fetch_error: Mapped[str | None] = mapped_column(Text, nullable=True)
     extract_error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    cache_key: Mapped[str | None] = mapped_column(String, nullable=True)
+    cached_at: Mapped[str | None] = mapped_column(String, nullable=True)
+    cache_expires_at: Mapped[str | None] = mapped_column(String, nullable=True)
+    last_seen_at: Mapped[str | None] = mapped_column(String, nullable=True)
+    skip_reason: Mapped[str | None] = mapped_column(String, nullable=True)
