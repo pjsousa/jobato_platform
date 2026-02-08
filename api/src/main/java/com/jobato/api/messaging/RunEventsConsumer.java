@@ -1,6 +1,7 @@
 package com.jobato.api.messaging;
 
 import com.jobato.api.repository.RunRepository;
+import com.jobato.api.service.ReportService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -23,10 +24,12 @@ public class RunEventsConsumer implements StreamListener<String, MapRecord<Strin
 
     private final RunRepository runRepository;
     private final ObjectMapper objectMapper;
+    private final ReportService reportService;
 
-    public RunEventsConsumer(RunRepository runRepository, ObjectMapper objectMapper) {
+    public RunEventsConsumer(RunRepository runRepository, ObjectMapper objectMapper, ReportService reportService) {
         this.runRepository = runRepository;
         this.objectMapper = objectMapper;
+        this.reportService = reportService;
     }
 
     @Override
