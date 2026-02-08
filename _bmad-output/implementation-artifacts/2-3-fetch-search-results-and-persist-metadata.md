@@ -1,6 +1,6 @@
 # Story 2.3: Fetch search results and persist metadata
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -19,20 +19,20 @@ so that I can review job opportunities found in the run.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Query x domain fetch loop and response mapping (AC: 1,4)
-  - [ ] Load enabled queries and allowlists and generate combinations (reuse Epic 1 logic if present).
-  - [ ] Call Google Search for each combination using runId context for logging/metrics.
-  - [ ] Map response items to result metadata records and persist to the run SQLite file.
-- [ ] Task 2: Redirect resolution and 404 handling (AC: 2,3)
-  - [ ] Resolve result URLs with a single redirect max and store final URL.
-  - [ ] If resolver returns 404, skip persistence and record skip reason (log/metric).
-- [ ] Task 3: Schema alignment for result metadata (AC: 4)
-  - [ ] Update ML SQLAlchemy models and Alembic migration with required fields.
-  - [ ] Ensure schema matches API Flyway expectations and naming rules (snake_case).
-- [ ] Task 4: Tests (AC: 1-4)
-  - [ ] Unit tests for google_search client call count and runId association.
-  - [ ] Unit tests for redirect resolver and 404 skip behavior.
-  - [ ] Persistence test for result records linked to runId.
+- [x] Task 1: Query x domain fetch loop and response mapping (AC: 1,4)
+  - [x] Load enabled queries and allowlists and generate combinations (reuse Epic 1 logic if present).
+  - [x] Call Google Search for each combination using runId context for logging/metrics.
+  - [x] Map response items to result metadata records and persist to the run SQLite file.
+- [x] Task 2: Redirect resolution and 404 handling (AC: 2,3)
+  - [x] Resolve result URLs with a single redirect max and store final URL.
+  - [x] If resolver returns 404, skip persistence and record skip reason (log/metric).
+- [x] Task 3: Schema alignment for result metadata (AC: 4)
+  - [x] Update ML SQLAlchemy models and Alembic migration with required fields.
+  - [x] Ensure schema matches API Flyway expectations and naming rules (snake_case).
+- [x] Task 4: Tests (AC: 1-4)
+  - [x] Unit tests for google_search client call count and runId association.
+  - [x] Unit tests for redirect resolver and 404 skip behavior.
+  - [x] Persistence test for result records linked to runId.
 
 ## Dev Notes
 
@@ -110,12 +110,31 @@ N/A
 - Ultimate context engine analysis completed - comprehensive developer guide created.
 - Confirm search API choice and credentials (CSE ID and API key) before coding.
 - Company/posted-date fields may not be available from search results; confirm schema expectations.
+- Implemented ML ingestion flow with query/allowlist loading, search execution per run input, URL resolution, and result metadata persistence.
+- Added Google Custom Search client, URL resolver with single-redirect handling, and skip logging for 404s.
+- Added SQLAlchemy run_items model plus Alembic migration and repository/session helpers.
+- Added pytest coverage for search calls, redirect handling, 404 skip behavior, and persistence; tests run: `source ml/.venv/bin/activate && python -m pytest`, `./gradlew test`, `npm test`.
 
 ### File List
 
-- Expected: ml/app/pipelines/ingestion.py
-- Expected: ml/app/services/google_search.py
-- Expected: ml/app/services/fetcher.py
-- Expected: ml/app/db/models.py
-- Expected: ml/app/db/migrations/
-- Expected: ml/app/schemas/results.py
+- _bmad-output/implementation-artifacts/2-3-fetch-search-results-and-persist-metadata.md
+- _bmad-output/implementation-artifacts/sprint-status.yaml
+- ml/app/pipelines/ingestion.py
+- ml/app/schemas/results.py
+- ml/app/services/google_search.py
+- ml/app/services/fetcher.py
+- ml/app/db/models.py
+- ml/app/db/session.py
+- ml/app/db/results_repository.py
+- ml/app/db/__init__.py
+- ml/app/db/alembic.ini
+- ml/app/db/migrations/env.py
+- ml/app/db/migrations/versions/20260208_create_run_items.py
+- ml/tests/test_ingestion.py
+- ml/tests/test_fetcher.py
+- ml/tests/test_results_persistence.py
+- ml/tests/test_google_search.py
+
+## Change Log
+
+- 2026-02-08: Implemented ML ingestion, URL resolution, run_items schema/migration, and tests for Story 2.3.

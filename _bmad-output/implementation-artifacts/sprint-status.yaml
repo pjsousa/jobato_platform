@@ -50,7 +50,7 @@ development_status:
   epic-2: in-progress
   2-1-manual-run-request-and-lifecycle-tracking: in-progress
   2-2-quota-and-concurrency-enforcement: review
-  2-3-fetch-search-results-and-persist-metadata: ready-for-dev
+  2-3-fetch-search-results-and-persist-metadata: review
   2-4-capture-raw-html-and-visible-text: ready-for-dev
   2-5-cache-results-and-enforce-revisit-throttling: ready-for-dev
   2-6-run-summary-metrics-and-zero-results-logging: ready-for-dev
