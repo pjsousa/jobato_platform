@@ -1,1 +1,7 @@
-queries: []
+queries:
+- {id: d088feed-0bae-41c3-b4df-b4250dfd2baf, text: staff backend remote, enabled: true,
+  createdAt: '2026-02-08T15:30:54.182075548Z', updatedAt: '2026-02-08T15:54:59.717097509Z'}
+- {id: 3b5246c7-e2db-42a1-a7fe-143a81df0ba3, text: senior backend python remote, enabled: true,
+  createdAt: '2026-02-08T15:31:16.721508503Z', updatedAt: '2026-02-08T15:54:59.01885255Z'}
+- {id: 6f632ff8-e258-4c37-927e-36aee7387464, text: senior AND remote AND python AND
+    lead, enabled: true, createdAt: '2026-02-08T15:55:11.668136958Z', updatedAt: '2026-02-08T15:55:11.668136958Z'}

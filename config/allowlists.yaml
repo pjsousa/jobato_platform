@@ -1,1 +1,7 @@
-allowlists: []
+allowlists:
+- domain: greenhouse.io
+  enabled: false
+- domain: example.com
+  enabled: false
+- domain: workable.com
+  enabled: true
