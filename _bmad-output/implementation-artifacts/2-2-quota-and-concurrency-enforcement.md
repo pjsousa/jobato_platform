@@ -37,6 +37,16 @@ so that I avoid exceeding API limits.
   - [x] ML tests for concurrency cap and quota stop behavior
   - [x] Frontend tests for quota-reached warning and partial status display
 
+### Review Follow-ups (AI)
+
+- [ ] [AI-Review][CRITICAL] Reconcile story File List/claims with actual git changes; update story or apply missing code. [_bmad-output/implementation-artifacts/2-2-quota-and-concurrency-enforcement.md:155]
+- [ ] [AI-Review][HIGH] Ensure quota enforcement re-checks remaining quota during concurrent execution to prevent exceeding daily limit when multiple runs share quota store. [ml/app/pipelines/run_pipeline.py:35]
+- [ ] [AI-Review][HIGH] Complete RFC 7807 problem details for quota-reached errors (set `type` and expand tests to assert required fields). [api/src/main/java/com/jobato/api/controller/RunExceptionHandler.java:35]
+- [ ] [AI-Review][HIGH] Validate/handle malformed `run.completed` payloads so partial status isn't silently downgraded. [api/src/main/java/com/jobato/api/messaging/RunEventsConsumer.java:59]
+- [ ] [AI-Review][MEDIUM] Replace JSON-in-YAML with actual YAML in `config/quota.yaml` and tests to match operator expectations. [config/quota.yaml:1]
+- [ ] [AI-Review][MEDIUM] Establish schema/migration contract for `quota_usage` DB access and avoid silent zero-usage fallback on missing table. [api/src/main/java/com/jobato/api/repository/QuotaUsageRepository.java:23]
+- [ ] [AI-Review][LOW] Add explicit partial/quota-reached detail footer copy per UX guidance in run status UI. [frontend/src/features/runs/components/RunStatus.tsx:82]
+
 ## Dev Notes
 
 ### Developer Context
