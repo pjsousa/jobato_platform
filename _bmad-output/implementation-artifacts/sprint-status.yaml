@@ -53,7 +53,7 @@ development_status:
   2-3-fetch-search-results-and-persist-metadata: backlog
   2-4-capture-raw-html-and-visible-text: ready-for-dev
   2-5-cache-results-and-enforce-revisit-throttling: backlog
-  2-6-run-summary-metrics-and-zero-results-logging: backlog
+  2-6-run-summary-metrics-and-zero-results-logging: ready-for-dev
   epic-2-retrospective: optional
 
   epic-3: backlog
