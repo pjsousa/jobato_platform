@@ -40,8 +40,9 @@ class RunServiceTest {
         RunInputService runInputService = new RunInputService(queryRepository, allowlistRepository);
         RunRepository runRepository = Mockito.mock(RunRepository.class);
         RunEventPublisher runEventPublisher = Mockito.mock(RunEventPublisher.class);
+        QuotaService quotaService = Mockito.mock(QuotaService.class);
         Clock clock = Clock.fixed(Instant.parse("2026-02-07T10:00:00Z"), ZoneOffset.UTC);
-        RunService runService = new RunService(runInputService, runRepository, runEventPublisher, clock);
+        RunService runService = new RunService(runInputService, runRepository, runEventPublisher, quotaService, clock);
 
         RunRequestedPayload payload = runService.prepareRunRequestedPayload();
 

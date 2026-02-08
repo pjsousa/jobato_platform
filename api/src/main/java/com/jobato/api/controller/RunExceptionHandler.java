@@ -2,6 +2,7 @@ package com.jobato.api.controller;
 
 import com.jobato.api.service.RunInProgressException;
 import com.jobato.api.service.RunNotFoundException;
+import com.jobato.api.service.QuotaReachedException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -29,5 +30,14 @@ public class RunExceptionHandler {
         detail.setInstance(URI.create(request.getRequestURI()));
         detail.setProperty("errorCode", "RUN_NOT_FOUND");
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(detail);
+    }
+
+    @ExceptionHandler(QuotaReachedException.class)
+    public ResponseEntity<ProblemDetail> handleQuotaReached(QuotaReachedException exception, HttpServletRequest request) {
+        ProblemDetail detail = ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, exception.getMessage());
+        detail.setTitle("Quota reached");
+        detail.setInstance(URI.create(request.getRequestURI()));
+        detail.setProperty("errorCode", "QUOTA_REACHED");
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(detail);
     }
 }

@@ -33,12 +33,6 @@ export const RunPage = () => {
     }
   }, [runId])
 
-  useEffect(() => {
-    if (runError instanceof ApiError && runError.problem?.errorCode === 'RUN_NOT_FOUND') {
-      setRunId(null)
-    }
-  }, [runError])
-
   const handleTrigger = () => {
     setStatusNotice(null)
     triggerRun.mutate(undefined, {

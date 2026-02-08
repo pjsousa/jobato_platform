@@ -3,6 +3,7 @@ export type RunResponse = {
   status: string
   startedAt: string
   endedAt: string | null
+  statusReason: string | null
 }
 
 type ApiProblem = {

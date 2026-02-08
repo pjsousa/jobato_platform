@@ -68,6 +68,7 @@ export const AllowlistPage = () => {
       <section className="card">
         <h2>{editing ? 'Edit domain' : 'Add a domain'}</h2>
         <AllowlistForm
+          key={editing?.domain ?? 'create'}
           mode={editing ? 'edit' : 'create'}
           initialDomain={editing?.domain}
           onSubmit={handleSubmit}

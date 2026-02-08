@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Set;
@@ -23,9 +24,12 @@ public class ActiveRunDatabase {
           run_id TEXT PRIMARY KEY,
           status TEXT NOT NULL,
           started_at TEXT NOT NULL,
-          ended_at TEXT
+          ended_at TEXT,
+          status_reason TEXT
         )
         """;
+    private static final String STATUS_REASON_COLUMN = "status_reason";
+    private static final String ADD_STATUS_REASON_COLUMN = "ALTER TABLE runs ADD COLUMN status_reason TEXT";
     private static final String CREATE_STATUS_INDEX =
         "CREATE INDEX IF NOT EXISTS idx_runs__status ON runs(status)";
 
@@ -90,10 +94,26 @@ public class ActiveRunDatabase {
             try (Statement statement = connection.createStatement()) {
                 statement.execute(CREATE_RUNS_TABLE);
                 statement.execute(CREATE_STATUS_INDEX);
+                if (!columnExists(connection, "runs", STATUS_REASON_COLUMN)) {
+                    statement.execute(ADD_STATUS_REASON_COLUMN);
+                }
             } catch (SQLException exception) {
                 throw new IllegalStateException("Failed to initialize runs schema", exception);
             }
             initializedPaths.add(dbPath);
         }
+    }
+
+    private boolean columnExists(Connection connection, String tableName, String columnName) throws SQLException {
+        try (Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("PRAGMA table_info(" + tableName + ")")) {
+            while (resultSet.next()) {
+                String name = resultSet.getString("name");
+                if (columnName.equalsIgnoreCase(name)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

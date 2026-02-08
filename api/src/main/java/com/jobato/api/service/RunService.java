@@ -18,15 +18,18 @@ public class RunService {
     private final RunInputService runInputService;
     private final RunRepository runRepository;
     private final RunEventPublisher runEventPublisher;
+    private final QuotaService quotaService;
     private final Clock clock;
 
     public RunService(RunInputService runInputService,
                       RunRepository runRepository,
                       RunEventPublisher runEventPublisher,
+                      QuotaService quotaService,
                       Clock clock) {
         this.runInputService = runInputService;
         this.runRepository = runRepository;
         this.runEventPublisher = runEventPublisher;
+        this.quotaService = quotaService;
         this.clock = clock;
     }
 
@@ -39,6 +42,8 @@ public class RunService {
         runRepository.findActiveRun().ifPresent(run -> {
             throw new RunInProgressException("A run is already in progress. Please wait for it to finish before starting another.");
         });
+
+        quotaService.ensureQuotaAvailable();
 
         RunRequestedPayload payload = prepareRunRequestedPayload();
         String runId = UUID.randomUUID().toString();
@@ -60,7 +65,8 @@ public class RunService {
             record.runId(),
             record.status(),
             record.startedAt().toString(),
-            endedAt
+            endedAt,
+            record.statusReason()
         );
     }
 }

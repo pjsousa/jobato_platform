@@ -1,5 +1,6 @@
 package com.jobato.api.messaging;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jobato.api.model.RunRecord;
 import com.jobato.api.repository.ActiveRunDatabase;
 import com.jobato.api.repository.RunRepository;
@@ -31,7 +32,7 @@ class RunEventsConsumerTest {
 
         ActiveRunDatabase activeRunDatabase = new ActiveRunDatabase(dataDir.toString());
         runRepository = new RunRepository(activeRunDatabase);
-        runEventsConsumer = new RunEventsConsumer(runRepository);
+        runEventsConsumer = new RunEventsConsumer(runRepository, new ObjectMapper());
     }
 
     @Test
@@ -51,6 +52,7 @@ class RunEventsConsumerTest {
         RunRecord updated = runRepository.findById(created.runId()).orElseThrow();
         assertThat(updated.status()).isEqualTo("completed");
         assertThat(updated.endedAt()).isEqualTo(event.occurredAt());
+        assertThat(updated.statusReason()).isNull();
     }
 
     @Test
@@ -78,5 +80,25 @@ class RunEventsConsumerTest {
         RunRecord updated = runRepository.findById(created.runId()).orElseThrow();
         assertThat(updated.status()).isEqualTo("failed");
         assertThat(updated.endedAt()).isEqualTo(event.occurredAt());
+        assertThat(updated.statusReason()).isNull();
+    }
+
+    @Test
+    void storesPartialStatusAndReasonFromCompletionPayload() {
+        RunRecord created = runRepository.createRun("run-3", Instant.parse("2026-02-07T12:00:00Z"));
+        RunEventEnvelope event = new RunEventEnvelope(
+            "event-4",
+            "run.completed",
+            1,
+            Instant.parse("2026-02-07T12:05:00Z"),
+            created.runId(),
+            "{\"status\":\"partial\",\"reason\":\"quota-reached\"}"
+        );
+
+        runEventsConsumer.handleEvent(event);
+
+        RunRecord updated = runRepository.findById(created.runId()).orElseThrow();
+        assertThat(updated.status()).isEqualTo("partial");
+        assertThat(updated.statusReason()).isEqualTo("quota-reached");
     }
 }

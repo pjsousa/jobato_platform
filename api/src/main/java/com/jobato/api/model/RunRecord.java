@@ -6,6 +6,7 @@ public record RunRecord(
     String runId,
     String status,
     Instant startedAt,
-    Instant endedAt
+    Instant endedAt,
+    String statusReason
 ) {
 }

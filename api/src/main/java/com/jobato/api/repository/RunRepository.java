@@ -21,7 +21,7 @@ public class RunRepository {
     }
 
     public Optional<RunRecord> findActiveRun() {
-        String sql = "SELECT run_id, status, started_at, ended_at FROM runs WHERE status = ? ORDER BY started_at DESC LIMIT 1";
+        String sql = "SELECT run_id, status, started_at, ended_at, status_reason FROM runs WHERE status = ? ORDER BY started_at DESC LIMIT 1";
         try (Connection connection = activeRunDatabase.openConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, STATUS_RUNNING);
@@ -47,11 +47,11 @@ public class RunRepository {
         } catch (SQLException exception) {
             throw new IllegalStateException("Failed to create run", exception);
         }
-        return new RunRecord(runId, STATUS_RUNNING, startedAt, null);
+        return new RunRecord(runId, STATUS_RUNNING, startedAt, null, null);
     }
 
     public Optional<RunRecord> findById(String runId) {
-        String sql = "SELECT run_id, status, started_at, ended_at FROM runs WHERE run_id = ?";
+        String sql = "SELECT run_id, status, started_at, ended_at, status_reason FROM runs WHERE run_id = ?";
         try (Connection connection = activeRunDatabase.openConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, runId);
@@ -66,14 +66,15 @@ public class RunRepository {
         return Optional.empty();
     }
 
-    public boolean updateRunStatusIfRunning(String runId, String status, Instant endedAt) {
-        String sql = "UPDATE runs SET status = ?, ended_at = ? WHERE run_id = ? AND status = ? AND ended_at IS NULL";
+    public boolean updateRunStatusIfRunning(String runId, String status, String statusReason, Instant endedAt) {
+        String sql = "UPDATE runs SET status = ?, status_reason = ?, ended_at = ? WHERE run_id = ? AND status = ? AND ended_at IS NULL";
         try (Connection connection = activeRunDatabase.openConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, status);
-            statement.setString(2, endedAt.toString());
-            statement.setString(3, runId);
-            statement.setString(4, STATUS_RUNNING);
+            statement.setString(2, statusReason);
+            statement.setString(3, endedAt.toString());
+            statement.setString(4, runId);
+            statement.setString(5, STATUS_RUNNING);
             return statement.executeUpdate() > 0;
         } catch (SQLException exception) {
             throw new IllegalStateException("Failed to update run status", exception);
@@ -86,6 +87,7 @@ public class RunRepository {
         Instant startedAt = Instant.parse(resultSet.getString("started_at"));
         String endedAtValue = resultSet.getString("ended_at");
         Instant endedAt = endedAtValue == null ? null : Instant.parse(endedAtValue);
-        return new RunRecord(runId, status, startedAt, endedAt);
+        String statusReason = resultSet.getString("status_reason");
+        return new RunRecord(runId, status, startedAt, endedAt, statusReason);
     }
 }

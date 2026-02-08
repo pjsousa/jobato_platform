@@ -24,7 +24,12 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.time.LocalDate;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 
@@ -65,6 +70,7 @@ class RunControllerTest {
     @DynamicPropertySource
     static void registerProperties(DynamicPropertyRegistry registry) {
         registry.add("CONFIG_DIR", () -> tempDir.resolve("config").toString());
+        registry.add("quota.file-path", () -> tempDir.resolve("config/quota.yaml").toString());
         registry.add("allowlist.file-path", () -> tempDir.resolve("config/allowlists.yaml").toString());
         registry.add("DATA_DIR", () -> tempDir.resolve("data").toString());
         registry.add("jobato.redis.streams.enabled", () -> "false");
@@ -79,6 +85,24 @@ class RunControllerTest {
         Path pointer = tempDir.resolve("data/db/current-db.txt");
         Files.createDirectories(pointer.getParent());
         Files.writeString(pointer, dataDir.resolve("runs-" + UUID.randomUUID() + ".db").toString());
+
+        Path quotaConfig = configDir.resolve("quota.yaml");
+        Files.writeString(quotaConfig, """
+            {
+              \"quota\": {
+                \"dailyLimit\": 1,
+                \"concurrencyLimit\": 1,
+                \"resetPolicy\": {
+                  \"timeZone\": \"UTC\",
+                  \"resetHour\": 0
+                }
+              }
+            }
+            """);
+
+        Path quotaDb = tempDir.resolve("data/db/quota/quota.db");
+        Files.createDirectories(quotaDb.getParent());
+        Files.deleteIfExists(quotaDb);
 
         queryRepository.saveAll(List.of(
             new QueryDefinition("q-1", "Data Analyst", true, "2026-02-07T10:00:00Z", "2026-02-07T10:00:00Z")
@@ -116,6 +140,19 @@ class RunControllerTest {
     }
 
     @Test
+    void rejectsRunWhenQuotaReached() throws Exception {
+        String quotaDay = LocalDate.now(ZoneOffset.UTC).toString();
+        Path quotaDb = tempDir.resolve("data/db/quota/quota.db");
+        seedQuotaUsage(quotaDb, quotaDay, "seed-run", 1);
+
+        mockMvc.perform(post("/api/runs"))
+            .andExpect(status().isTooManyRequests())
+            .andExpect(jsonPath("$.errorCode").value("QUOTA_REACHED"));
+
+        verify(runEventPublisher, never()).publishRunRequested(any(), any(), any());
+    }
+
+    @Test
     void returnsRunStatusById() throws Exception {
         RunRecord created = runRepository.createRun("run-lookup", Instant.parse("2026-02-07T12:00:00Z"));
 
@@ -125,5 +162,23 @@ class RunControllerTest {
             .andExpect(jsonPath("$.status").value("running"))
             .andExpect(jsonPath("$.startedAt").value("2026-02-07T12:00:00Z"))
             .andExpect(jsonPath("$.endedAt").value(nullValue()));
+    }
+
+    private void seedQuotaUsage(Path quotaDb, String day, String runId, int count) throws Exception {
+        try (Connection connection = DriverManager.getConnection("jdbc:sqlite:" + quotaDb.toAbsolutePath())) {
+            try (PreparedStatement create = connection.prepareStatement(
+                "CREATE TABLE IF NOT EXISTS quota_usage (day TEXT, run_id TEXT, count INTEGER, PRIMARY KEY(day, run_id))"
+            )) {
+                create.executeUpdate();
+            }
+            try (PreparedStatement insert = connection.prepareStatement(
+                "INSERT INTO quota_usage (day, run_id, count) VALUES (?, ?, ?)"
+            )) {
+                insert.setString(1, day);
+                insert.setString(2, runId);
+                insert.setInt(3, count);
+                insert.executeUpdate();
+            }
+        }
     }
 }

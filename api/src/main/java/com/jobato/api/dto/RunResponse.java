@@ -4,6 +4,7 @@ public record RunResponse(
     String runId,
     String status,
     String startedAt,
-    String endedAt
+    String endedAt,
+    String statusReason
 ) {
 }

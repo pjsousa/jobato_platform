@@ -72,6 +72,10 @@
   color: var(--ink);
 }
 
+.run-summary__value.is-warning {
+  color: var(--warning);
+}
+
 .run-status__details {
   display: grid;
   gap: 8px;

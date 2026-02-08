@@ -1,5 +1,5 @@
 import type { ChangeEvent, FormEvent } from 'react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 type AllowlistFormProps = {
   mode: 'create' | 'edit'
@@ -19,10 +19,6 @@ export const AllowlistForm = ({
   error,
 }: AllowlistFormProps) => {
   const [domain, setDomain] = useState(initialDomain ?? '')
-
-  useEffect(() => {
-    setDomain(initialDomain ?? '')
-  }, [initialDomain])
 
   const submitLabel = mode === 'create' ? 'Add domain' : 'Save changes'
 

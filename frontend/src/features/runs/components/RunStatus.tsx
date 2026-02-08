@@ -37,7 +37,7 @@ const statusClassMap: Record<string, string> = {
   partial: 'is-partial',
 }
 
-const RunSummaryBar = ({ run }: { run?: RunResponse | null }) => (
+const RunSummaryBar = ({ run, quotaReached }: { run?: RunResponse | null; quotaReached: boolean }) => (
   <div className="run-summary">
     <div className="run-summary__item">
       <span className="run-summary__label">Last run</span>
@@ -53,7 +53,9 @@ const RunSummaryBar = ({ run }: { run?: RunResponse | null }) => (
     </div>
     <div className="run-summary__item">
       <span className="run-summary__label">Quota remaining</span>
-      <span className="run-summary__value">—</span>
+      <span className={`run-summary__value ${quotaReached ? 'is-warning' : ''}`}>
+        {quotaReached ? 'Quota reached' : '—'}
+      </span>
     </div>
   </div>
 )
@@ -62,6 +64,8 @@ export const RunStatus = ({ run, isLoading = false, errorMessage }: RunStatusPro
   const status = run?.status ?? 'unknown'
   const statusLabel = statusLabelMap[status] ?? status
   const statusClass = statusClassMap[status] ?? 'is-unknown'
+  const quotaReached = run?.status === 'partial' && run?.statusReason === 'quota-reached'
+  const statusNotice = errorMessage ?? (quotaReached ? 'Quota reached mid-run. Results are partial.' : null)
 
   return (
     <div className="run-status">
@@ -75,7 +79,7 @@ export const RunStatus = ({ run, isLoading = false, errorMessage }: RunStatusPro
         ) : null}
       </div>
 
-      <RunSummaryBar run={run} />
+      <RunSummaryBar run={run} quotaReached={Boolean(quotaReached)} />
 
       <div className="run-status__details">
         {isLoading ? <p className="run-status__empty">Loading run status…</p> : null}
@@ -98,10 +102,10 @@ export const RunStatus = ({ run, isLoading = false, errorMessage }: RunStatusPro
         ) : null}
       </div>
 
-      {errorMessage ? (
+      {statusNotice ? (
         <div className="run-status__banner warning">
           <strong>Status notice</strong>
-          <span>{errorMessage}</span>
+          <span>{statusNotice}</span>
         </div>
       ) : null}
     </div>
