@@ -1,0 +1,125 @@
+.run-status {
+  display: grid;
+  gap: 16px;
+}
+
+.run-status__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.run-status__header p {
+  color: var(--muted);
+}
+
+.run-status-pill {
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.run-status-pill.is-running {
+  background: #fff2df;
+  color: var(--warning);
+}
+
+.run-status-pill.is-completed {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.run-status-pill.is-failed {
+  background: #fbe7e3;
+  color: var(--danger);
+}
+
+.run-status-pill.is-partial {
+  background: #fdf1d8;
+  color: var(--warning);
+}
+
+.run-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+}
+
+.run-summary__item {
+  display: grid;
+  gap: 6px;
+}
+
+.run-summary__label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.run-summary__value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.run-status__details {
+  display: grid;
+  gap: 8px;
+}
+
+.run-status__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #fffdf9;
+}
+
+.run-status__label {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.run-status__value {
+  font-weight: 600;
+}
+
+.run-status__empty {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.run-status__banner {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #efd2b4;
+  background: #fff7eb;
+  color: var(--warning);
+  font-size: 14px;
+}
+
+@media (max-width: 720px) {
+  .run-status__header {
+    flex-direction: column;
+  }
+
+  .run-status__row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

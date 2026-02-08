@@ -2,14 +2,20 @@ package com.jobato.api.service;
 
 import com.jobato.api.dto.RunInput;
 import com.jobato.api.dto.RunRequestedPayload;
+import com.jobato.api.messaging.RunEventPublisher;
 import com.jobato.api.model.AllowlistEntry;
 import com.jobato.api.model.QueryDefinition;
 import com.jobato.api.repository.AllowlistRepository;
 import com.jobato.api.repository.FileQueryRepository;
+import com.jobato.api.repository.RunRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mockito;
 
 import java.nio.file.Path;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,7 +38,10 @@ class RunServiceTest {
         ));
 
         RunInputService runInputService = new RunInputService(queryRepository, allowlistRepository);
-        RunService runService = new RunService(runInputService);
+        RunRepository runRepository = Mockito.mock(RunRepository.class);
+        RunEventPublisher runEventPublisher = Mockito.mock(RunEventPublisher.class);
+        Clock clock = Clock.fixed(Instant.parse("2026-02-07T10:00:00Z"), ZoneOffset.UTC);
+        RunService runService = new RunService(runInputService, runRepository, runEventPublisher, clock);
 
         RunRequestedPayload payload = runService.prepareRunRequestedPayload();
 

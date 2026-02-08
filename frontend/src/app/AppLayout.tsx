@@ -23,6 +23,12 @@ export const AppLayout = () => (
         >
           Queries
         </NavLink>
+        <NavLink
+          to="/runs"
+          className={({ isActive }) => `app-nav__link${isActive ? ' active' : ''}`}
+        >
+          Runs
+        </NavLink>
       </nav>
     </header>
     <Outlet />
