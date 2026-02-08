@@ -51,9 +51,9 @@ development_status:
   2-1-manual-run-request-and-lifecycle-tracking: ready-for-dev
   2-2-quota-and-concurrency-enforcement: ready-for-dev
   2-3-fetch-search-results-and-persist-metadata: ready-for-dev
-  2-4-capture-raw-html-and-visible-text: backlog
+  2-4-capture-raw-html-and-visible-text: ready-for-dev
   2-5-cache-results-and-enforce-revisit-throttling: ready-for-dev
-  2-6-run-summary-metrics-and-zero-results-logging: backlog
+  2-6-run-summary-metrics-and-zero-results-logging: ready-for-dev
   epic-2-retrospective: optional
 
   epic-3: backlog
