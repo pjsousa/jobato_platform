@@ -1,6 +1,6 @@
 # Story 2.2: Quota and concurrency enforcement
 
-Status: ready-for-dev
+Status: review
 Story Key: 2-2-quota-and-concurrency-enforcement
 Epic: 2 - Run and Capture Results
 
@@ -18,24 +18,33 @@ so that I avoid exceeding API limits.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Define quota and concurrency configuration (AC: 1, 2, 3)
-  - [ ] Ensure quota settings live in external config (config/quota.yaml) and are mounted into services
-  - [ ] Define daily quota limit, concurrency limit, and reset policy inputs
-- [ ] Task 2: Enforce concurrency and quota in ML run pipeline (AC: 1, 3)
-  - [ ] Limit concurrent query execution to the configured max
-  - [ ] Increment quota counter per external API call and persist per run/day
-  - [ ] When quota is reached mid-run, stop issuing new calls and mark run status partial with reason quota-reached
-- [ ] Task 3: Block runs when quota is already reached (AC: 2)
-  - [ ] Add pre-run quota check in RunService before creating the run record
-  - [ ] Return RFC 7807 Problem Details with a clear quota-reached message and errorCode
-- [ ] Task 4: Propagate partial status to API and UI (AC: 3)
-  - [ ] Emit run completion event with status partial and reason (do not introduce new event types)
-  - [ ] Update run status storage and DTOs to include partial and reason
-  - [ ] Show quota-reached warning in run summary bar and detail footer
-- [ ] Task 5: Tests and observability
-  - [ ] API tests for quota-reached block and partial status persistence
-  - [ ] ML tests for concurrency cap and quota stop behavior
-  - [ ] Frontend tests for quota-reached warning and partial status display
+- [x] Task 1: Define quota and concurrency configuration (AC: 1, 2, 3)
+  - [x] Ensure quota settings live in external config (config/quota.yaml) and are mounted into services
+  - [x] Define daily quota limit, concurrency limit, and reset policy inputs
+- [x] Task 2: Enforce concurrency and quota in ML run pipeline (AC: 1, 3)
+  - [x] Limit concurrent query execution to the configured max
+  - [x] Increment quota counter per external API call and persist per run/day
+  - [x] When quota is reached mid-run, stop issuing new calls and mark run status partial with reason quota-reached
+- [x] Task 3: Block runs when quota is already reached (AC: 2)
+  - [x] Add pre-run quota check in RunService before creating the run record
+  - [x] Return RFC 7807 Problem Details with a clear quota-reached message and errorCode
+- [x] Task 4: Propagate partial status to API and UI (AC: 3)
+  - [x] Emit run completion event with status partial and reason (do not introduce new event types)
+  - [x] Update run status storage and DTOs to include partial and reason
+  - [x] Show quota-reached warning in run summary bar and detail footer
+- [x] Task 5: Tests and observability
+  - [x] API tests for quota-reached block and partial status persistence
+  - [x] ML tests for concurrency cap and quota stop behavior
+  - [x] Frontend tests for quota-reached warning and partial status display
+
+### Review Follow-ups (AI)
+
+- [ ] [AI-Review][HIGH] Ensure quota enforcement re-checks remaining quota during concurrent execution to prevent exceeding daily limit when multiple runs share quota store. [ml/app/pipelines/run_pipeline.py:35]
+- [ ] [AI-Review][HIGH] Complete RFC 7807 problem details for quota-reached errors (set `type` and expand tests to assert required fields). [api/src/main/java/com/jobato/api/controller/RunExceptionHandler.java:35]
+- [ ] [AI-Review][HIGH] Validate/handle malformed `run.completed` payloads so partial status isn't silently downgraded. [api/src/main/java/com/jobato/api/messaging/RunEventsConsumer.java:59]
+- [ ] [AI-Review][MEDIUM] Replace JSON-in-YAML with actual YAML in `config/quota.yaml` and tests to match operator expectations. [config/quota.yaml:1]
+- [ ] [AI-Review][MEDIUM] Establish schema/migration contract for `quota_usage` DB access and avoid silent zero-usage fallback on missing table. [api/src/main/java/com/jobato/api/repository/QuotaUsageRepository.java:23]
+- [ ] [AI-Review][LOW] Add explicit partial/quota-reached detail footer copy per UX guidance in run status UI. [frontend/src/features/runs/components/RunStatus.tsx:82]
 
 ## Dev Notes
 
@@ -138,11 +147,53 @@ openai/gpt-5.2-codex
 
 - None
 
+### Implementation Plan
+
+- Define config/quota.yaml with dailyLimit, concurrencyLimit, and resetPolicy inputs.
+- Add quota config loaders in API and ML with unit tests.
+
 ### Completion Notes List
 
 - Ultimate context engine analysis completed - comprehensive developer guide created.
+- Added config/quota.yaml plus API/ML quota config loaders with validation and tests.
+- Implemented ML quota store + run pipeline with concurrency cap and quota-stop behavior; added pipeline tests.
+- Added API pre-run quota guard with RFC 7807 QUOTA_REACHED responses and quota usage lookup.
+- Propagated partial run status + reason through ML events, API storage/DTOs, and UI warnings.
+- Adjusted AllowlistForm remounting to satisfy react-hooks/set-state-in-effect lint rule.
 
 ### File List
 
 - _bmad-output/implementation-artifacts/2-2-quota-and-concurrency-enforcement.md
 - _bmad-output/implementation-artifacts/sprint-status.yaml
+- api/src/main/java/com/jobato/api/config/QuotaConfigRepository.java
+- api/src/main/java/com/jobato/api/config/QuotaResetPolicy.java
+- api/src/main/java/com/jobato/api/config/QuotaSettings.java
+- api/src/test/java/com/jobato/api/config/QuotaConfigRepositoryTest.java
+- config/quota.yaml
+- api/src/main/java/com/jobato/api/controller/RunExceptionHandler.java
+- api/src/main/java/com/jobato/api/repository/QuotaUsageRepository.java
+- api/src/main/java/com/jobato/api/service/QuotaReachedException.java
+- api/src/main/java/com/jobato/api/service/QuotaService.java
+- api/src/main/java/com/jobato/api/service/RunService.java
+- api/src/test/java/com/jobato/api/controller/RunControllerTest.java
+- api/src/test/java/com/jobato/api/service/RunServiceTest.java
+- api/src/main/java/com/jobato/api/dto/RunResponse.java
+- api/src/main/java/com/jobato/api/messaging/RunEventsConsumer.java
+- api/src/main/java/com/jobato/api/model/RunRecord.java
+- api/src/main/java/com/jobato/api/repository/ActiveRunDatabase.java
+- api/src/main/java/com/jobato/api/repository/RunRepository.java
+- api/src/test/java/com/jobato/api/messaging/RunEventsConsumerTest.java
+- ml/app/services/__init__.py
+- ml/app/services/quota.py
+- ml/app/pipelines/__init__.py
+- ml/app/pipelines/run_pipeline.py
+- ml/tests/test_quota_config.py
+- ml/tests/test_run_pipeline.py
+- frontend/src/features/runs/api/runs-api.ts
+- frontend/src/features/runs/components/RunPage.tsx
+- frontend/src/features/runs/components/RunStatus.css
+- frontend/src/features/runs/components/RunStatus.test.tsx
+- frontend/src/features/runs/components/RunStatus.tsx
+- frontend/src/features/runs/hooks/use-runs.ts
+- frontend/src/features/allowlist/components/AllowlistForm.tsx
+- frontend/src/features/allowlist/components/AllowlistPage.tsx

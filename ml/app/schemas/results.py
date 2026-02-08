@@ -1,0 +1,25 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import datetime
+
+
+@dataclass(frozen=True)
+class SearchResultItem:
+    title: str
+    snippet: str
+    link: str
+    display_link: str
+
+
+@dataclass(frozen=True)
+class ResultMetadata:
+    run_id: str
+    query_text: str
+    domain: str
+    title: str
+    snippet: str
+    raw_url: str
+    final_url: str
+    created_at: datetime
+    updated_at: datetime

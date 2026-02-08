@@ -1,0 +1,10 @@
+{
+  "quota": {
+    "dailyLimit": 100,
+    "concurrencyLimit": 3,
+    "resetPolicy": {
+      "timeZone": "UTC",
+      "resetHour": 0
+    }
+  }
+}
