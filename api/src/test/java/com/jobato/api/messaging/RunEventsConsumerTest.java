@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jobato.api.model.RunRecord;
 import com.jobato.api.repository.ActiveRunDatabase;
 import com.jobato.api.repository.RunRepository;
+import com.jobato.api.service.ReportService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -32,7 +33,8 @@ class RunEventsConsumerTest {
 
         ActiveRunDatabase activeRunDatabase = new ActiveRunDatabase(dataDir.toString());
         runRepository = new RunRepository(activeRunDatabase);
-        runEventsConsumer = new RunEventsConsumer(runRepository, new ObjectMapper());
+        ReportService reportService = org.mockito.Mockito.mock(ReportService.class);
+        runEventsConsumer = new RunEventsConsumer(runRepository, new ObjectMapper(), reportService);
     }
 
     @Test
