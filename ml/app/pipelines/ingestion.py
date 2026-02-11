@@ -12,13 +12,8 @@ import yaml
 from app.schemas.results import ResultMetadata, SearchResultItem
 from app.db.results_repository import ResultRepository
 from app.db.session import open_session
-
-try:
-    from app.services.html_fetcher import HtmlFetcher
-    from app.services.html_extractor import HtmlExtractor
-except ModuleNotFoundError:
-    HtmlFetcher = None
-    HtmlExtractor = None
+from app.services.html_fetcher import HtmlFetcher
+from app.services.html_extractor import HtmlExtractor
 
 
 @dataclass(frozen=True)
@@ -114,10 +109,8 @@ def ingest_run(
     pending_results: list[ResultMetadata] = []
     logger = logging.getLogger(__name__)
 
-    if capture_html and (HtmlFetcher is None or HtmlExtractor is None):
-        raise RuntimeError("HTML capture dependencies are not installed")
-    html_fetcher = HtmlFetcher(data_dir) if capture_html and HtmlFetcher is not None else None
-    html_extractor = HtmlExtractor() if capture_html and HtmlExtractor is not None else None
+    html_fetcher = HtmlFetcher(data_dir) if capture_html else None
+    html_extractor = HtmlExtractor() if capture_html else None
 
     for run_input in run_inputs:
         issued_calls += 1
@@ -138,10 +131,18 @@ def ingest_run(
             extract_error = None
 
             if html_fetcher is not None and html_extractor is not None and resolved.final_url:
-                raw_html_path, fetch_error = html_fetcher.fetch_html(resolved.final_url)
-                if raw_html_path and not fetch_error:
+                fetched_html_path = None
+                try:
+                    fetched_html_path, fetch_error = html_fetcher.fetch_html(resolved.final_url, run_id=run_id)
+                except Exception as exception:
+                    fetch_error = str(exception)
+
+                if fetched_html_path:
+                    raw_html_path = _normalize_html_path_for_storage(fetched_html_path, data_dir)
+
+                if fetched_html_path and not fetch_error:
                     try:
-                        with open(raw_html_path, "r", encoding="utf-8") as f:
+                        with open(fetched_html_path, "r", encoding="utf-8", errors="replace") as f:
                             html_content = f.read()
                         visible_text, extract_error = html_extractor.extract_visible_text(html_content)
                     except Exception as exception:
@@ -186,6 +187,21 @@ def _build_search_query(domain: str, query_text: str) -> str:
 def _resolve_run_db_path(run_id: str, data_dir: Path | str | None) -> Path:
     data_root = Path(data_dir or os.getenv("DATA_DIR", "data"))
     return data_root / "db" / "runs" / f"{run_id}.db"
+
+
+def _normalize_html_path_for_storage(file_path: str, data_dir: Path | str | None) -> str:
+    html_path = Path(file_path)
+    data_root = Path(data_dir or os.getenv("DATA_DIR", "data"))
+
+    if data_root.name != "data":
+        return str(html_path)
+
+    try:
+        relative = html_path.resolve().relative_to(data_root.resolve())
+    except ValueError:
+        return str(html_path)
+
+    return str(Path("data") / relative)
 
 
 def _load_queries(path: Path) -> list[QueryDefinition]:

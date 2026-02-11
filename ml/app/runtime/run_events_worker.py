@@ -115,7 +115,7 @@ class RunEventsWorker:
                 search_client=search_client,
                 url_resolver=url_resolver,
                 data_dir=self._data_dir,
-                capture_html=False,
+                capture_html=True,
             )
             self._publish_event(
                 COMPLETED_EVENT_TYPE,
