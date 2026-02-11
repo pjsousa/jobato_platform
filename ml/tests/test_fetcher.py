@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 from app.pipelines.ingestion import RunInput, ingest_run
 from app.schemas.results import SearchResultItem
-from app.services.fetcher import FetchResponse, ResolvedUrl, UrlResolver
+from app.services.fetcher import DeterministicMockUrlResolver, FetchResponse, ResolvedUrl, UrlResolver
 
 
 def test_url_resolver_follows_single_redirect():
@@ -70,3 +70,13 @@ def test_ingest_run_skips_404_results():
     assert outcome.skipped_404 == 1
     assert outcome.persisted_results == 0
     assert writer.results == []
+
+
+def test_deterministic_mock_url_resolver_redirects_once():
+    resolver = DeterministicMockUrlResolver()
+
+    resolved = resolver.resolve("https://example.com/redirect/job")
+
+    assert resolved.redirected is True
+    assert resolved.status_code == 200
+    assert resolved.final_url == "https://example.com/final/job"

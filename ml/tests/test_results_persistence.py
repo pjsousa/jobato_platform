@@ -49,5 +49,15 @@ def test_ingest_run_persists_results_linked_to_run(tmp_path):
     session.close()
 
     assert len(results) == 1
-    assert results[0].run_id == "run-999"
-    assert results[0].final_url == "https://example.com/job"
+    persisted = results[0]
+    assert persisted.run_id == "run-999"
+    assert persisted.query_id == "q1"
+    assert persisted.query_text == "Backend Remote"
+    assert persisted.search_query == "site:example.com Backend Remote"
+    assert persisted.domain == "example.com"
+    assert persisted.title == "Backend Engineer"
+    assert persisted.snippet == "Remote role"
+    assert persisted.raw_url == "https://example.com/job"
+    assert persisted.final_url == "https://example.com/job"
+    assert persisted.created_at == "2026-02-08T12:00:00Z"
+    assert persisted.updated_at == "2026-02-08T12:00:00Z"

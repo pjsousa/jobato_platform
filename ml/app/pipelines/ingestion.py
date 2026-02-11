@@ -7,13 +7,18 @@ import os
 from pathlib import Path
 import re
 from typing import Iterable, Protocol
+import yaml
 
 from app.schemas.results import ResultMetadata, SearchResultItem
 from app.db.results_repository import ResultRepository
 from app.db.session import open_session
-from app.services.html_fetcher import HtmlFetcher
-from app.services.html_extractor import HtmlExtractor
-from app.services.cache import CacheService
+
+try:
+    from app.services.html_fetcher import HtmlFetcher
+    from app.services.html_extractor import HtmlExtractor
+except ModuleNotFoundError:
+    HtmlFetcher = None
+    HtmlExtractor = None
 
 
 @dataclass(frozen=True)
@@ -33,7 +38,7 @@ class AllowlistEntry:
 
 @dataclass(frozen=True)
 class RunInput:
-    query_id: str
+    query_id: str | None
     query_text: str
     domain: str
     search_query: str
@@ -94,7 +99,8 @@ def ingest_run(
     url_resolver: UrlResolver,
     result_writer: ResultWriter | None = None,
     now: datetime | None = None,
-    data_dir: Path | None = None,
+    data_dir: Path | str | None = None,
+    capture_html: bool = False,
 ) -> IngestionOutcome:
     writer = result_writer
     session = None
@@ -107,22 +113,16 @@ def ingest_run(
     skipped_404 = 0
     pending_results: list[ResultMetadata] = []
     logger = logging.getLogger(__name__)
-    
-    # Initialize services
-    cache_service = CacheService(session)
-    html_fetcher = HtmlFetcher(data_dir)
-    html_extractor = HtmlExtractor()
+
+    if capture_html and (HtmlFetcher is None or HtmlExtractor is None):
+        raise RuntimeError("HTML capture dependencies are not installed")
+    html_fetcher = HtmlFetcher(data_dir) if capture_html and HtmlFetcher is not None else None
+    html_extractor = HtmlExtractor() if capture_html and HtmlExtractor is not None else None
 
     for run_input in run_inputs:
         issued_calls += 1
         results = search_client.search(run_id=run_id, search_query=run_input.search_query)
         for result in results:
-            # Check if URL was recently visited (revisit throttling)
-            # This is a simplified check - in reality we might need to 
-            # query existing results in the DB to determine last visit time  
-            # For now we'll just log and proceed with fetching
-            
-            resolved = url_resolver.resolve(result.link)
             resolved = url_resolver.resolve(result.link)
             if resolved.status_code == 404:
                 skipped_404 += 1
@@ -131,29 +131,28 @@ def ingest_run(
             if not resolved.final_url:
                 continue
             domain = result.display_link or run_input.domain
-            
-            # Fetch and extract HTML
+
             raw_html_path = None
             visible_text = None
             fetch_error = None
             extract_error = None
-            
-            # Only attempt fetching if we have a valid resolved URL
-            if resolved.final_url:
+
+            if html_fetcher is not None and html_extractor is not None and resolved.final_url:
                 raw_html_path, fetch_error = html_fetcher.fetch_html(resolved.final_url)
                 if raw_html_path and not fetch_error:
-                    # Extract text from HTML
                     try:
                         with open(raw_html_path, "r", encoding="utf-8") as f:
                             html_content = f.read()
                         visible_text, extract_error = html_extractor.extract_visible_text(html_content)
-                    except Exception as e:
-                        extract_error = str(e)
-            
+                    except Exception as exception:
+                        extract_error = str(exception)
+
             pending_results.append(
                 ResultMetadata(
                     run_id=run_id,
+                    query_id=run_input.query_id,
                     query_text=run_input.query_text,
+                    search_query=run_input.search_query,
                     domain=domain,
                     title=result.title,
                     snippet=result.snippet,
@@ -184,7 +183,7 @@ def _build_search_query(domain: str, query_text: str) -> str:
     return f"site:{domain} {query_text}"
 
 
-def _resolve_run_db_path(run_id: str, data_dir: Path | None) -> Path:
+def _resolve_run_db_path(run_id: str, data_dir: Path | str | None) -> Path:
     data_root = Path(data_dir or os.getenv("DATA_DIR", "data"))
     return data_root / "db" / "runs" / f"{run_id}.db"
 
@@ -284,99 +283,20 @@ def _load_yaml_list(path: Path, root_key: str) -> list[dict[str, object]]:
     content = path.read_text(encoding="utf-8")
     if not content.strip():
         return []
-    lines = [line.rstrip() for line in content.splitlines()]
-    items: list[dict[str, object]] = []
-    current: dict[str, object] | None = None
-    in_list = False
-    inline_buffer: str | None = None
-    for line in lines:
-        stripped = line.strip()
-        if not stripped or stripped.startswith("#"):
-            continue
-        if inline_buffer is not None:
-            inline_buffer = f"{inline_buffer} {stripped}"
-            if inline_buffer.strip().endswith("}"):
-                current = _parse_inline_map(inline_buffer)
-                inline_buffer = None
-            continue
-        if not in_list:
-            if stripped == f"{root_key}:":
-                in_list = True
-            continue
-        if stripped.startswith("- "):
-            if current is not None:
-                items.append(current)
-            remainder = stripped[2:].strip()
-            if remainder.startswith("{"):
-                if remainder.endswith("}"):
-                    current = _parse_inline_map(remainder)
-                else:
-                    inline_buffer = remainder
-                    current = None
-            elif remainder:
-                current = {}
-                key, value = _parse_key_value(remainder)
-                current[key] = value
-            else:
-                current = {}
-            continue
-        if current is None:
-            continue
-        if ":" not in stripped:
-            continue
-        key, value = _parse_key_value(stripped)
-        current[key] = value
-    if current is not None:
-        items.append(current)
-    return items
+    payload = yaml.safe_load(content)
+    if payload is None:
+        return []
+    if not isinstance(payload, dict):
+        raise ValueError(f"Invalid YAML in {path}: expected mapping root")
 
+    items = payload.get(root_key)
+    if items is None:
+        return []
+    if not isinstance(items, list):
+        raise ValueError(f"Invalid YAML in {path}: '{root_key}' must be a list")
 
-def _parse_inline_map(value: str) -> dict[str, object]:
-    inner = value.strip()[1:-1].strip()
-    if not inner:
-        return {}
-    pairs = _split_inline_pairs(inner)
-    parsed: dict[str, object] = {}
-    for pair in pairs:
-        key, parsed_value = _parse_key_value(pair)
-        parsed[key] = parsed_value
-    return parsed
-
-
-def _split_inline_pairs(value: str) -> list[str]:
-    pairs: list[str] = []
-    current: list[str] = []
-    in_single_quote = False
-    in_double_quote = False
-    for char in value:
-        if char == "'" and not in_double_quote:
-            in_single_quote = not in_single_quote
-        elif char == '"' and not in_single_quote:
-            in_double_quote = not in_double_quote
-        if char == "," and not in_single_quote and not in_double_quote:
-            pair = "".join(current).strip()
-            if pair:
-                pairs.append(pair)
-            current = []
-            continue
-        current.append(char)
-    tail = "".join(current).strip()
-    if tail:
-        pairs.append(tail)
-    return pairs
-
-
-def _parse_key_value(pair: str) -> tuple[str, object]:
-    key, _, raw_value = pair.partition(":")
-    key = key.strip()
-    value = raw_value.strip()
-    if value.startswith("'") and value.endswith("'") and len(value) >= 2:
-        value = value[1:-1]
-    elif value.startswith('"') and value.endswith('"') and len(value) >= 2:
-        value = value[1:-1]
-    lowered = value.lower()
-    if lowered == "true":
-        return key, True
-    if lowered == "false":
-        return key, False
-    return key, value
+    normalized: list[dict[str, object]] = []
+    for item in items:
+        if isinstance(item, dict):
+            normalized.append(item)
+    return normalized

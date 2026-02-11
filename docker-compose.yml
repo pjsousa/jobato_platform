@@ -13,6 +13,7 @@ services:
       REDIS_PORT: "6379"
       CONFIG_DIR: /app/config
       DATA_DIR: /app/data
+      JOBATO_SEARCH_PROVIDER: ${JOBATO_SEARCH_PROVIDER:-mock}
     volumes:
       - ./config:/app/config
       - ./data:/app/data

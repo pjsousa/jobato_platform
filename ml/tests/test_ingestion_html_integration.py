@@ -72,7 +72,8 @@ def test_ingest_run_with_html_storage():
                     url_resolver=resolver,
                     result_writer=writer,
                     now=datetime(2026, 2, 8, 12, 0, tzinfo=timezone.utc),
-                    data_dir=tmp_dir
+                    data_dir=tmp_dir,
+                    capture_html=True,
                 )
 
                 # Verify
@@ -146,7 +147,8 @@ def test_ingest_run_with_html_fetch_error():
                 url_resolver=resolver,
                 result_writer=writer,
                 now=datetime(2026, 2, 8, 12, 0, tzinfo=timezone.utc),
-                data_dir=tmp_dir
+                data_dir=tmp_dir,
+                capture_html=True,
             )
 
             # Verify

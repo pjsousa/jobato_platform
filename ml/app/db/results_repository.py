@@ -26,7 +26,9 @@ class ResultRepository:
         updated_at = _format_timestamp(result.updated_at)
         return RunResult(
             run_id=result.run_id,
+            query_id=result.query_id,
             query_text=result.query_text,
+            search_query=result.search_query,
             domain=result.domain,
             title=result.title,
             snippet=result.snippet,

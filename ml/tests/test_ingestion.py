@@ -94,3 +94,4 @@ def test_ingest_run_calls_search_for_each_input_with_run_id():
     assert len(search_client.calls) == len(run_inputs)
     assert all(run_id == "run-123" for run_id, _ in search_client.calls)
     assert outcome.issued_calls == len(run_inputs)
+    assert writer.results == []
