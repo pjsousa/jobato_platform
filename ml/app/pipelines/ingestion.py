@@ -15,6 +15,7 @@ from app.db.session import open_session
 from app.services.cache import CachePolicy, CacheService, load_cache_policy
 from app.services.html_fetcher import HtmlFetcher
 from app.services.html_extractor import HtmlExtractor
+from app.services.url_normalizer import normalize_url
 
 
 @dataclass(frozen=True)
@@ -257,6 +258,21 @@ def ingest_run(
                 if not resolved_result.from_cache:
                     new_jobs_count += 1
 
+            # Normalize URL for dedupe key generation
+            # Use final_url if available, otherwise fall back to raw_url
+            url_to_normalize = resolved_result.final_url or resolved_result.raw_url
+            normalization_result = normalize_url(url_to_normalize)
+            normalized_url = normalization_result.normalized_url
+            normalization_error = normalization_result.error
+
+            if normalization_error:
+                logger.warning(
+                    "url_normalization.error run_id=%s url=%s error=%s",
+                    run_id,
+                    url_to_normalize,
+                    normalization_error,
+                )
+
             pending_results.append(
                 ResultMetadata(
                     run_id=run_id,
@@ -279,6 +295,8 @@ def ingest_run(
                     cache_expires_at=resolved_result.cache_expires_at,
                     last_seen_at=current_last_seen_at,
                     skip_reason=skip_reason,
+                    normalized_url=normalized_url,
+                    normalization_error=normalization_error,
                 )
             )
 

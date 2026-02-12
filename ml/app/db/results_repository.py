@@ -45,6 +45,8 @@ class ResultRepository:
             cache_expires_at=result.cache_expires_at,
             last_seen_at=result.last_seen_at,
             skip_reason=result.skip_reason,
+            normalized_url=result.normalized_url,
+            normalization_error=result.normalization_error,
         )
 
 

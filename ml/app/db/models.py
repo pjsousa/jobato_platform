@@ -33,3 +33,5 @@ class RunResult(Base):
     cache_expires_at: Mapped[str | None] = mapped_column(String, nullable=True)
     last_seen_at: Mapped[str | None] = mapped_column(String, nullable=True)
     skip_reason: Mapped[str | None] = mapped_column(String, nullable=True)
+    normalized_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    normalization_error: Mapped[str | None] = mapped_column(String, nullable=True)
