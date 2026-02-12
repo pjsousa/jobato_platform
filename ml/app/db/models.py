@@ -14,7 +14,9 @@ class RunResult(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     run_id: Mapped[str] = mapped_column(String, nullable=False)
+    query_id: Mapped[str | None] = mapped_column(String, nullable=True)
     query_text: Mapped[str] = mapped_column(String, nullable=False)
+    search_query: Mapped[str] = mapped_column(String, nullable=False)
     domain: Mapped[str] = mapped_column(String, nullable=False)
     title: Mapped[str] = mapped_column(String, nullable=False)
     snippet: Mapped[str] = mapped_column(Text, nullable=False)

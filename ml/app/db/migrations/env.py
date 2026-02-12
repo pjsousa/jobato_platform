@@ -13,6 +13,10 @@ config = context.config
 
 
 def _get_url() -> str:
+    configured_url = config.get_main_option("sqlalchemy.url")
+    if configured_url:
+        return configured_url
+
     data_dir = os.getenv("DATA_DIR", "data")
     db_file = os.getenv("RUN_DB_FILE", "db/runs/dev.db")
     path = Path(data_dir) / db_file

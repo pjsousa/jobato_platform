@@ -1,0 +1,3 @@
+cache:
+  ttlHours: 12
+  revisitThrottleDays: 7

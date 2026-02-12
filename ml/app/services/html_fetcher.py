@@ -1,73 +1,65 @@
 from __future__ import annotations
 
-import os
 import hashlib
+import os
 from pathlib import Path
-from typing import Optional
 from urllib.parse import urlparse
-
-import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
-
-from app.services.fetcher import FetchResponse
-
+from urllib.request import Request, urlopen
+from urllib.error import HTTPError, URLError
 
 class HtmlFetcher:
-    def __init__(self, data_dir: Path | str | None = None, timeout: int = 30):
+    def __init__(self, data_dir: Path | str | None = None, timeout: int = 30) -> None:
         self.data_dir = Path(data_dir or os.getenv("DATA_DIR", "data"))
         self.timeout = timeout
-        self.session = self._create_session()
-        
-    def _create_session(self) -> requests.Session:
-        """Create a requests session with retry strategy."""
-        session = requests.Session()
-        retry_strategy = Retry(
-            total=3,
-            backoff_factor=1,
-            status_forcelist=[429, 500, 502, 503, 504],
-        )
-        adapter = HTTPAdapter(max_retries=retry_strategy)
-        session.mount("http://", adapter)
-        session.mount("https://", adapter)
-        return session
 
-    def fetch_html(self, url: str) -> tuple[Optional[str], Optional[str]]:
-        """
-        Fetch HTML content from a URL and save it to file storage.
-        
-        Returns:
-            tuple of (file_path, error_message) where:
-            - file_path: path to saved HTML file or None if failed
-            - error_message: error description or None if successful
-        """
+    def fetch_html(self, url: str, *, run_id: str) -> tuple[str | None, str | None]:
+        if not url:
+            return None, "url is required"
+        if not run_id:
+            return None, "run_id is required"
+
+        destination = self._build_destination_path(url, run_id)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+
         try:
-            response = self.session.get(url, timeout=self.timeout)
-            response.raise_for_status()
-            
-            # Create HTML storage directory if it doesn't exist
-            html_dir = self.data_dir / "html" / "raw"
-            html_dir.mkdir(parents=True, exist_ok=True)
-            
-            # Generate deterministic filename based on URL
-            filename = self._generate_filename(url)
-            file_path = html_dir / filename
-            
-            # Save HTML content
-            with open(file_path, "w", encoding="utf-8") as f:
-                f.write(response.text)
-                
-            return str(file_path), None
-            
-        except Exception as e:
-            return None, str(e)
+            html = self._read_html(url)
+            destination.write_text(html, encoding="utf-8")
+            return str(destination), None
+        except Exception as error:
+            return None, str(error)
 
-    def _generate_filename(self, url: str) -> str:
-        """
-        Generate a deterministic, filesystem-safe filename for HTML content.
-        
-        Uses URL hash for collision safety and traceability.
-        """
-        parsed_url = urlparse(url)
-        url_hash = hashlib.md5(url.encode('utf-8')).hexdigest()
-        return f"{url_hash}.html"
+    def _build_destination_path(self, url: str, run_id: str) -> Path:
+        run_key = _sanitize_segment(run_id)
+        url_hash = hashlib.sha256(url.encode("utf-8")).hexdigest()
+        return self.data_dir / "html" / "raw" / run_key / f"{url_hash}.html"
+
+    def _read_html(self, url: str) -> str:
+        parsed = urlparse(url)
+        if parsed.scheme == "mock":
+            domain = parsed.netloc or "example.com"
+            path = parsed.path or "/"
+            return (
+                "<html><head><title>Mock page</title></head><body>"
+                f"<h1>Mock result for {domain}</h1>"
+                f"<p>Path: {path}</p>"
+                "<p>This deterministic content is for ingestion tests.</p>"
+                "</body></html>"
+            )
+
+        request = Request(url, headers={"User-Agent": "jobato/1.0"}, method="GET")
+        try:
+            with urlopen(request, timeout=self.timeout) as response:
+                content = response.read()
+                charset = response.headers.get_content_charset() or "utf-8"
+        except HTTPError as error:
+            raise RuntimeError(f"HTTP {error.code} while fetching {url}") from error
+        except (TimeoutError, URLError, OSError) as error:
+            raise RuntimeError(f"Failed to fetch HTML for {url}: {error}") from error
+
+        return content.decode(charset, errors="replace")
+
+
+def _sanitize_segment(value: str) -> str:
+    cleaned = [ch if ch.isalnum() or ch in {"-", "_"} else "_" for ch in value]
+    normalized = "".join(cleaned).strip("_")
+    return normalized or "unknown"

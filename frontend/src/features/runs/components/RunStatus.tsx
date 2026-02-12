@@ -1,8 +1,10 @@
 import type { RunResponse } from '../api/runs-api'
+import type { RunSummaryResponse } from '../../reports/api/reports-api'
 import './RunStatus.css'
 
 type RunStatusProps = {
   run?: RunResponse | null
+  summary?: RunSummaryResponse | null
   isLoading?: boolean
   errorMessage?: string | null
 }
@@ -37,31 +39,62 @@ const statusClassMap: Record<string, string> = {
   partial: 'is-partial',
 }
 
-const RunSummaryBar = ({ run, quotaReached }: { run?: RunResponse | null; quotaReached: boolean }) => (
+const formatCount = (value?: number | null) => {
+  if (value === null || value === undefined) {
+    return '—'
+  }
+  return new Intl.NumberFormat().format(value)
+}
+
+const formatDuration = (value?: number | null) => {
+  if (value === null || value === undefined || value < 0) {
+    return '—'
+  }
+  if (value < 1000) {
+    return `${value} ms`
+  }
+  const totalSeconds = Math.floor(value / 1000)
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  if (minutes > 0) {
+    return `${minutes}m ${seconds}s`
+  }
+  return `${totalSeconds}s`
+}
+
+const RunSummaryBar = ({ run, summary }: { run?: RunResponse | null; summary?: RunSummaryResponse | null }) => {
+  const summaryStatus = run?.status ?? summary?.status
+
+  return (
   <div className="run-summary">
     <div className="run-summary__item">
       <span className="run-summary__label">Last run</span>
-      <span className="run-summary__value">{formatTimestamp(run?.startedAt)}</span>
+      <span className="run-summary__value">{formatTimestamp(summary?.triggerTime ?? run?.startedAt)}</span>
+    </div>
+    <div className="run-summary__item">
+      <span className="run-summary__label">Duration</span>
+      <span className="run-summary__value">{formatDuration(summary?.durationMs)}</span>
     </div>
     <div className="run-summary__item">
       <span className="run-summary__label">New count</span>
-      <span className="run-summary__value">—</span>
+      <span className="run-summary__value">{formatCount(summary?.newJobsCount)}</span>
     </div>
     <div className="run-summary__item">
       <span className="run-summary__label">Relevant count</span>
-      <span className="run-summary__value">—</span>
+      <span className="run-summary__value">{formatCount(summary?.relevantCount)}</span>
     </div>
     <div className="run-summary__item">
-      <span className="run-summary__label">Quota remaining</span>
-      <span className={`run-summary__value ${quotaReached ? 'is-warning' : ''}`}>
-        {quotaReached ? 'Quota reached' : '—'}
+      <span className="run-summary__label">Status</span>
+      <span className={`run-summary__value ${summaryStatus === 'partial' ? 'is-warning' : ''}`}>
+        {summaryStatus ? (statusLabelMap[summaryStatus] ?? summaryStatus) : '—'}
       </span>
     </div>
   </div>
-)
+  )
+}
 
-export const RunStatus = ({ run, isLoading = false, errorMessage }: RunStatusProps) => {
-  const status = run?.status ?? 'unknown'
+export const RunStatus = ({ run, summary, isLoading = false, errorMessage }: RunStatusProps) => {
+  const status = run?.status ?? summary?.status ?? 'unknown'
   const statusLabel = statusLabelMap[status] ?? status
   const statusClass = statusClassMap[status] ?? 'is-unknown'
   const quotaReached = run?.status === 'partial' && run?.statusReason === 'quota-reached'
@@ -74,12 +107,12 @@ export const RunStatus = ({ run, isLoading = false, errorMessage }: RunStatusPro
           <h2>Run status</h2>
           <p>Track the latest run state and timing.</p>
         </div>
-        {run ? (
+        {run || summary ? (
           <span className={`run-status-pill ${statusClass}`}>{statusLabel}</span>
         ) : null}
       </div>
 
-      <RunSummaryBar run={run} quotaReached={Boolean(quotaReached)} />
+      <RunSummaryBar run={run} summary={summary} />
 
       <div className="run-status__details">
         {isLoading ? <p className="run-status__empty">Loading run status…</p> : null}

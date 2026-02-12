@@ -94,3 +94,46 @@ def test_ingest_run_calls_search_for_each_input_with_run_id():
     assert len(search_client.calls) == len(run_inputs)
     assert all(run_id == "run-123" for run_id, _ in search_client.calls)
     assert outcome.issued_calls == len(run_inputs)
+    assert outcome.new_jobs_count == 0
+    assert writer.results == []
+
+
+def test_ingest_run_tracks_zero_result_query_domain_context():
+    run_inputs = [
+        RunInput(
+            query_id="q1",
+            query_text="senior AND remote",
+            domain="workable.com",
+            search_query="site:workable.com senior AND remote",
+        )
+    ]
+
+    class StubSearchClient:
+        def search(self, *, run_id: str, search_query: str):
+            return []
+
+    class StubResolver:
+        def resolve(self, url: str):
+            return type("Resolved", (), {"status_code": 200, "final_url": url, "redirected": False})()
+
+    class StubWriter:
+        def write_all(self, results):
+            return len(list(results))
+
+    outcome = ingest_run(
+        run_id="run-456",
+        run_inputs=run_inputs,
+        search_client=StubSearchClient(),
+        url_resolver=StubResolver(),
+        result_writer=StubWriter(),
+        now=datetime(2026, 2, 8, 12, 0, tzinfo=timezone.utc),
+    )
+
+    assert outcome.issued_calls == 1
+    assert outcome.new_jobs_count == 0
+    assert outcome.persisted_results == 0
+    assert len(outcome.zero_results) == 1
+    zero_result = outcome.zero_results[0]
+    assert zero_result.query_text == "senior AND remote"
+    assert zero_result.domain == "workable.com"
+    assert zero_result.occurred_at == "2026-02-08T12:00:00Z"

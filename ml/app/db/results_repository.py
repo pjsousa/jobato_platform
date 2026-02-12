@@ -26,7 +26,9 @@ class ResultRepository:
         updated_at = _format_timestamp(result.updated_at)
         return RunResult(
             run_id=result.run_id,
+            query_id=result.query_id,
             query_text=result.query_text,
+            search_query=result.search_query,
             domain=result.domain,
             title=result.title,
             snippet=result.snippet,
@@ -38,6 +40,11 @@ class ResultRepository:
             visible_text=result.visible_text,
             fetch_error=result.fetch_error,
             extract_error=result.extract_error,
+            cache_key=result.cache_key,
+            cached_at=result.cached_at,
+            cache_expires_at=result.cache_expires_at,
+            last_seen_at=result.last_seen_at,
+            skip_reason=result.skip_reason,
         )
 
 

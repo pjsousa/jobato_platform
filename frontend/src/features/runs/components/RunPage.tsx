@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { ApiError, type RunResponse } from '../api/runs-api'
+import { useLatestRunSummary } from '../../reports/hooks/use-reports'
 import { useRun, useTriggerRun } from '../hooks/use-runs'
 import { RunControls } from './RunControls'
 import { RunStatus } from './RunStatus'
@@ -24,6 +25,7 @@ export const RunPage = () => {
 
   const triggerRun = useTriggerRun()
   const { data: run, isLoading, error: runError } = useRun(runId)
+  const { data: latestSummary } = useLatestRunSummary()
 
   useEffect(() => {
     if (runId) {
@@ -65,7 +67,7 @@ export const RunPage = () => {
       </section>
 
       <section className="card">
-        <RunStatus run={run} isLoading={isLoading} errorMessage={errorMessage} />
+        <RunStatus run={run} summary={latestSummary} isLoading={isLoading} errorMessage={errorMessage} />
       </section>
     </div>
   )

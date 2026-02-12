@@ -7,13 +7,14 @@ import os
 from pathlib import Path
 import re
 from typing import Iterable, Protocol
+import yaml
 
 from app.schemas.results import ResultMetadata, SearchResultItem
 from app.db.results_repository import ResultRepository
 from app.db.session import open_session
+from app.services.cache import CachePolicy, CacheService, load_cache_policy
 from app.services.html_fetcher import HtmlFetcher
 from app.services.html_extractor import HtmlExtractor
-from app.services.cache import CacheService
 
 
 @dataclass(frozen=True)
@@ -33,7 +34,7 @@ class AllowlistEntry:
 
 @dataclass(frozen=True)
 class RunInput:
-    query_id: str
+    query_id: str | None
     query_text: str
     domain: str
     search_query: str
@@ -44,6 +45,28 @@ class IngestionOutcome:
     issued_calls: int
     persisted_results: int
     skipped_404: int
+    new_jobs_count: int
+    zero_results: list["ZeroResultObservation"]
+
+
+@dataclass(frozen=True)
+class ZeroResultObservation:
+    query_text: str
+    domain: str
+    occurred_at: str
+
+
+@dataclass(frozen=True)
+class _ResolvedSearchResult:
+    title: str
+    snippet: str
+    raw_url: str
+    final_url: str
+    domain: str
+    from_cache: bool
+    cache_key: str
+    cached_at: str
+    cache_expires_at: str
 
 
 class SearchClient(Protocol):
@@ -94,7 +117,11 @@ def ingest_run(
     url_resolver: UrlResolver,
     result_writer: ResultWriter | None = None,
     now: datetime | None = None,
-    data_dir: Path | None = None,
+    data_dir: Path | str | None = None,
+    config_dir: Path | str | None = None,
+    capture_html: bool = False,
+    cache_policy: CachePolicy | None = None,
+    cache_service: CacheService | None = None,
 ) -> IngestionOutcome:
     writer = result_writer
     session = None
@@ -105,67 +132,170 @@ def ingest_run(
     timestamp = now or datetime.now(timezone.utc)
     issued_calls = 0
     skipped_404 = 0
+    new_jobs_count = 0
+    zero_results: list[ZeroResultObservation] = []
     pending_results: list[ResultMetadata] = []
     logger = logging.getLogger(__name__)
-    
-    # Initialize services
-    cache_service = CacheService(session)
-    html_fetcher = HtmlFetcher(data_dir)
-    html_extractor = HtmlExtractor()
+    effective_policy = cache_policy or load_cache_policy(
+        config_dir=Path(config_dir) if config_dir is not None else None
+    )
+    effective_cache_service = cache_service or CacheService(
+        data_dir=data_dir,
+        policy=effective_policy,
+        logger=logger,
+    )
+
+    html_fetcher = HtmlFetcher(data_dir) if capture_html else None
+    html_extractor = HtmlExtractor() if capture_html else None
+    seen_urls_in_run: set[str] = set()
 
     for run_input in run_inputs:
-        issued_calls += 1
-        results = search_client.search(run_id=run_id, search_query=run_input.search_query)
-        for result in results:
-            # Check if URL was recently visited (revisit throttling)
-            # This is a simplified check - in reality we might need to 
-            # query existing results in the DB to determine last visit time  
-            # For now we'll just log and proceed with fetching
-            
-            resolved = url_resolver.resolve(result.link)
-            resolved = url_resolver.resolve(result.link)
-            if resolved.status_code == 404:
-                skipped_404 += 1
-                logger.info("ingestion.skip_404 run_id=%s url=%s", run_id, result.link)
-                continue
-            if not resolved.final_url:
-                continue
-            domain = result.display_link or run_input.domain
-            
-            # Fetch and extract HTML
+        has_non_skipped_result = False
+        cache_key = effective_cache_service.generate_cache_key(
+            query_text=run_input.query_text,
+            domain=run_input.domain,
+        )
+        cached_bundle = effective_cache_service.get_fresh_results(cache_key=cache_key, now=timestamp)
+        resolved_results: list[_ResolvedSearchResult] = []
+
+        if cached_bundle is not None:
+            for cached_result in cached_bundle.results:
+                resolved_results.append(
+                    _ResolvedSearchResult(
+                        title=cached_result.title,
+                        snippet=cached_result.snippet,
+                        raw_url=cached_result.raw_url,
+                        final_url=cached_result.final_url,
+                        domain=cached_result.domain,
+                        from_cache=True,
+                        cache_key=cache_key,
+                        cached_at=cached_bundle.cached_at,
+                        cache_expires_at=cached_bundle.cache_expires_at,
+                    )
+                )
+        else:
+            issued_calls += 1
+            search_results = search_client.search(run_id=run_id, search_query=run_input.search_query)
+            cached_at, cache_expires_at = effective_cache_service.build_cache_window(now=timestamp)
+            for search_result in search_results:
+                resolved = url_resolver.resolve(search_result.link)
+                if resolved.status_code == 404:
+                    skipped_404 += 1
+                    logger.info("ingestion.skip_404 run_id=%s url=%s", run_id, search_result.link)
+                    continue
+                if not resolved.final_url:
+                    continue
+                domain = search_result.display_link or run_input.domain
+                resolved_results.append(
+                    _ResolvedSearchResult(
+                        title=search_result.title,
+                        snippet=search_result.snippet,
+                        raw_url=search_result.link,
+                        final_url=resolved.final_url,
+                        domain=domain,
+                        from_cache=False,
+                        cache_key=cache_key,
+                        cached_at=cached_at,
+                        cache_expires_at=cache_expires_at,
+                    )
+                )
+
+        for resolved_result in resolved_results:
+            lookup_url = resolved_result.final_url or resolved_result.raw_url
+            prior_last_seen_at = effective_cache_service.find_latest_last_seen(url=lookup_url)
+
             raw_html_path = None
             visible_text = None
             fetch_error = None
             extract_error = None
-            
-            # Only attempt fetching if we have a valid resolved URL
-            if resolved.final_url:
-                raw_html_path, fetch_error = html_fetcher.fetch_html(resolved.final_url)
-                if raw_html_path and not fetch_error:
-                    # Extract text from HTML
+            skip_reason = None
+            current_last_seen_at = _format_timestamp(timestamp)
+
+            if lookup_url in seen_urls_in_run or effective_cache_service.is_revisit_throttled(
+                last_seen_at=prior_last_seen_at,
+                now=timestamp,
+            ):
+                skip_reason = "revisit_throttle"
+                logger.info(
+                    "revisit.throttle run_id=%s url=%s last_seen_at=%s",
+                    run_id,
+                    lookup_url,
+                    prior_last_seen_at,
+                )
+
+            if lookup_url:
+                seen_urls_in_run.add(lookup_url)
+
+            if (
+                skip_reason is None
+                and html_fetcher is not None
+                and html_extractor is not None
+                and resolved_result.final_url
+            ):
+                fetched_html_path = None
+                try:
+                    fetched_html_path, fetch_error = html_fetcher.fetch_html(
+                        resolved_result.final_url,
+                        run_id=run_id,
+                    )
+                except Exception as exception:
+                    fetch_error = str(exception)
+
+                if fetched_html_path:
+                    raw_html_path = _normalize_html_path_for_storage(fetched_html_path, data_dir)
+
+                if fetched_html_path and not fetch_error:
                     try:
-                        with open(raw_html_path, "r", encoding="utf-8") as f:
+                        with open(fetched_html_path, "r", encoding="utf-8", errors="replace") as f:
                             html_content = f.read()
                         visible_text, extract_error = html_extractor.extract_visible_text(html_content)
-                    except Exception as e:
-                        extract_error = str(e)
-            
+                    except Exception as exception:
+                        extract_error = str(exception)
+
+            if skip_reason is None:
+                has_non_skipped_result = True
+                if not resolved_result.from_cache:
+                    new_jobs_count += 1
+
             pending_results.append(
                 ResultMetadata(
                     run_id=run_id,
+                    query_id=run_input.query_id,
                     query_text=run_input.query_text,
-                    domain=domain,
-                    title=result.title,
-                    snippet=result.snippet,
-                    raw_url=result.link,
-                    final_url=resolved.final_url,
+                    search_query=run_input.search_query,
+                    domain=resolved_result.domain,
+                    title=resolved_result.title,
+                    snippet=resolved_result.snippet,
+                    raw_url=resolved_result.raw_url,
+                    final_url=resolved_result.final_url,
                     created_at=timestamp,
                     updated_at=timestamp,
                     raw_html_path=raw_html_path,
                     visible_text=visible_text,
                     fetch_error=fetch_error,
                     extract_error=extract_error,
+                    cache_key=resolved_result.cache_key,
+                    cached_at=resolved_result.cached_at,
+                    cache_expires_at=resolved_result.cache_expires_at,
+                    last_seen_at=current_last_seen_at,
+                    skip_reason=skip_reason,
                 )
+            )
+
+        if not has_non_skipped_result:
+            occurred_at = _format_timestamp(timestamp)
+            zero_results.append(
+                ZeroResultObservation(
+                    query_text=run_input.query_text,
+                    domain=run_input.domain,
+                    occurred_at=occurred_at,
+                )
+            )
+            logger.info(
+                "ingestion.zero_results run_id=%s query=%s domain=%s",
+                run_id,
+                run_input.query_text,
+                run_input.domain,
             )
 
     try:
@@ -174,6 +304,8 @@ def ingest_run(
             issued_calls=issued_calls,
             persisted_results=persisted,
             skipped_404=skipped_404,
+            new_jobs_count=new_jobs_count,
+            zero_results=zero_results,
         )
     finally:
         if session is not None:
@@ -184,9 +316,29 @@ def _build_search_query(domain: str, query_text: str) -> str:
     return f"site:{domain} {query_text}"
 
 
-def _resolve_run_db_path(run_id: str, data_dir: Path | None) -> Path:
+def _resolve_run_db_path(run_id: str, data_dir: Path | str | None) -> Path:
     data_root = Path(data_dir or os.getenv("DATA_DIR", "data"))
     return data_root / "db" / "runs" / f"{run_id}.db"
+
+
+def _normalize_html_path_for_storage(file_path: str, data_dir: Path | str | None) -> str:
+    html_path = Path(file_path)
+    data_root = Path(data_dir or os.getenv("DATA_DIR", "data"))
+
+    if data_root.name != "data":
+        return str(html_path)
+
+    try:
+        relative = html_path.resolve().relative_to(data_root.resolve())
+    except ValueError:
+        return str(html_path)
+
+    return str(Path("data") / relative)
+
+
+def _format_timestamp(value: datetime) -> str:
+    normalized = value.astimezone(timezone.utc).replace(microsecond=0)
+    return normalized.isoformat().replace("+00:00", "Z")
 
 
 def _load_queries(path: Path) -> list[QueryDefinition]:
@@ -284,99 +436,20 @@ def _load_yaml_list(path: Path, root_key: str) -> list[dict[str, object]]:
     content = path.read_text(encoding="utf-8")
     if not content.strip():
         return []
-    lines = [line.rstrip() for line in content.splitlines()]
-    items: list[dict[str, object]] = []
-    current: dict[str, object] | None = None
-    in_list = False
-    inline_buffer: str | None = None
-    for line in lines:
-        stripped = line.strip()
-        if not stripped or stripped.startswith("#"):
-            continue
-        if inline_buffer is not None:
-            inline_buffer = f"{inline_buffer} {stripped}"
-            if inline_buffer.strip().endswith("}"):
-                current = _parse_inline_map(inline_buffer)
-                inline_buffer = None
-            continue
-        if not in_list:
-            if stripped == f"{root_key}:":
-                in_list = True
-            continue
-        if stripped.startswith("- "):
-            if current is not None:
-                items.append(current)
-            remainder = stripped[2:].strip()
-            if remainder.startswith("{"):
-                if remainder.endswith("}"):
-                    current = _parse_inline_map(remainder)
-                else:
-                    inline_buffer = remainder
-                    current = None
-            elif remainder:
-                current = {}
-                key, value = _parse_key_value(remainder)
-                current[key] = value
-            else:
-                current = {}
-            continue
-        if current is None:
-            continue
-        if ":" not in stripped:
-            continue
-        key, value = _parse_key_value(stripped)
-        current[key] = value
-    if current is not None:
-        items.append(current)
-    return items
+    payload = yaml.safe_load(content)
+    if payload is None:
+        return []
+    if not isinstance(payload, dict):
+        raise ValueError(f"Invalid YAML in {path}: expected mapping root")
 
+    items = payload.get(root_key)
+    if items is None:
+        return []
+    if not isinstance(items, list):
+        raise ValueError(f"Invalid YAML in {path}: '{root_key}' must be a list")
 
-def _parse_inline_map(value: str) -> dict[str, object]:
-    inner = value.strip()[1:-1].strip()
-    if not inner:
-        return {}
-    pairs = _split_inline_pairs(inner)
-    parsed: dict[str, object] = {}
-    for pair in pairs:
-        key, parsed_value = _parse_key_value(pair)
-        parsed[key] = parsed_value
-    return parsed
-
-
-def _split_inline_pairs(value: str) -> list[str]:
-    pairs: list[str] = []
-    current: list[str] = []
-    in_single_quote = False
-    in_double_quote = False
-    for char in value:
-        if char == "'" and not in_double_quote:
-            in_single_quote = not in_single_quote
-        elif char == '"' and not in_single_quote:
-            in_double_quote = not in_double_quote
-        if char == "," and not in_single_quote and not in_double_quote:
-            pair = "".join(current).strip()
-            if pair:
-                pairs.append(pair)
-            current = []
-            continue
-        current.append(char)
-    tail = "".join(current).strip()
-    if tail:
-        pairs.append(tail)
-    return pairs
-
-
-def _parse_key_value(pair: str) -> tuple[str, object]:
-    key, _, raw_value = pair.partition(":")
-    key = key.strip()
-    value = raw_value.strip()
-    if value.startswith("'") and value.endswith("'") and len(value) >= 2:
-        value = value[1:-1]
-    elif value.startswith('"') and value.endswith('"') and len(value) >= 2:
-        value = value[1:-1]
-    lowered = value.lower()
-    if lowered == "true":
-        return key, True
-    if lowered == "false":
-        return key, False
-    return key, value
+    normalized: list[dict[str, object]] = []
+    for item in items:
+        if isinstance(item, dict):
+            normalized.append(item)
+    return normalized

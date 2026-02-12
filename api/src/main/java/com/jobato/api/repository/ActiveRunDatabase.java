@@ -38,10 +38,22 @@ public class ActiveRunDatabase {
           status TEXT NOT NULL
         )
         """;
+    private static final String CREATE_ZERO_RESULT_LOGS_TABLE = """
+        CREATE TABLE IF NOT EXISTS zero_result_logs (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          run_id TEXT NOT NULL,
+          query_text TEXT NOT NULL,
+          domain TEXT NOT NULL,
+          occurred_at TEXT NOT NULL,
+          UNIQUE(run_id, query_text, domain)
+        )
+        """;
     private static final String STATUS_REASON_COLUMN = "status_reason";
     private static final String ADD_STATUS_REASON_COLUMN = "ALTER TABLE runs ADD COLUMN status_reason TEXT";
     private static final String CREATE_STATUS_INDEX =
         "CREATE INDEX IF NOT EXISTS idx_runs__status ON runs(status)";
+    private static final String CREATE_ZERO_RESULT_LOGS_RUN_ID_INDEX =
+        "CREATE INDEX IF NOT EXISTS idx_zero_result_logs__run_id ON zero_result_logs(run_id)";
 
     private final Path dataDir;
     private final Set<Path> initializedPaths = ConcurrentHashMap.newKeySet();
@@ -104,7 +116,9 @@ public class ActiveRunDatabase {
             try (Statement statement = connection.createStatement()) {
                 statement.execute(CREATE_RUNS_TABLE);
                 statement.execute(CREATE_RUN_SUMMARIES_TABLE);
+                statement.execute(CREATE_ZERO_RESULT_LOGS_TABLE);
                 statement.execute(CREATE_STATUS_INDEX);
+                statement.execute(CREATE_ZERO_RESULT_LOGS_RUN_ID_INDEX);
                 if (!columnExists(connection, "runs", STATUS_REASON_COLUMN)) {
                     statement.execute(ADD_STATUS_REASON_COLUMN);
                 }
