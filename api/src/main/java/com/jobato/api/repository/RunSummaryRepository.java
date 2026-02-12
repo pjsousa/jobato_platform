@@ -19,7 +19,17 @@ public class RunSummaryRepository {
     }
 
     public void save(RunSummary runSummary) {
-        String sql = "INSERT INTO run_summaries (run_id, trigger_time, duration_ms, new_jobs_count, relevant_count, status) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = """
+            INSERT INTO run_summaries (run_id, trigger_time, duration_ms, new_jobs_count, relevant_count, status)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(run_id)
+            DO UPDATE SET
+              trigger_time = excluded.trigger_time,
+              duration_ms = excluded.duration_ms,
+              new_jobs_count = excluded.new_jobs_count,
+              relevant_count = excluded.relevant_count,
+              status = excluded.status
+            """;
         try (Connection connection = activeRunDatabase.openConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, runSummary.getRunId());

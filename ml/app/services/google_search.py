@@ -91,6 +91,16 @@ class DeterministicMockSearchClient:
         if not search_query:
             return []
 
+        normalized_query = search_query.lower()
+        if " and " in normalized_query:
+            self._logger.info(
+                "google_search.mock_completed run_id=%s query=%s results=%s",
+                run_id,
+                search_query,
+                0,
+            )
+            return []
+
         domain = _extract_domain_from_search_query(search_query)
         query_hash = hashlib.sha256(search_query.encode("utf-8")).hexdigest()[:12]
         result = SearchResultItem(

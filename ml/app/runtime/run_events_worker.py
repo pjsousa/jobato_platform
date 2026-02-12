@@ -124,7 +124,17 @@ class RunEventsWorker:
                     "status": "completed",
                     "issuedCalls": outcome.issued_calls,
                     "persistedResults": outcome.persisted_results,
+                    "newJobsCount": outcome.new_jobs_count,
+                    "relevantCount": 0,
                     "skipped404": outcome.skipped_404,
+                    "zeroResults": [
+                        {
+                            "queryText": item.query_text,
+                            "domain": item.domain,
+                            "occurredAt": item.occurred_at,
+                        }
+                        for item in outcome.zero_results
+                    ],
                 },
             )
         except (SearchServiceError, FetcherError, TimeoutError) as error:

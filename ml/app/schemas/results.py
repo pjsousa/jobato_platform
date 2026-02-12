@@ -29,3 +29,8 @@ class ResultMetadata:
     visible_text: str | None = None
     fetch_error: str | None = None
     extract_error: str | None = None
+    cache_key: str | None = None
+    cached_at: str | None = None
+    cache_expires_at: str | None = None
+    last_seen_at: str | None = None
+    skip_reason: str | None = None

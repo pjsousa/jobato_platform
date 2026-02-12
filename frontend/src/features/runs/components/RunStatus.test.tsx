@@ -16,8 +16,34 @@ describe('RunStatus', () => {
       />,
     )
 
-    expect(screen.getByText(/running/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/running/i).length).toBeGreaterThan(0)
     expect(screen.getByText(/run-123/i)).toBeInTheDocument()
+  })
+
+  it('renders report summary metrics when available', () => {
+    render(
+      <RunStatus
+        run={{
+          runId: 'run-321',
+          status: 'completed',
+          startedAt: '2026-02-07T12:00:00Z',
+          endedAt: '2026-02-07T12:02:05Z',
+          statusReason: null,
+        }}
+        summary={{
+          runId: 'run-321',
+          status: 'completed',
+          triggerTime: '2026-02-07T12:00:00Z',
+          durationMs: 125000,
+          newJobsCount: 12,
+          relevantCount: 3,
+        }}
+      />,
+    )
+
+    expect(screen.getByText(/^12$/)).toBeInTheDocument()
+    expect(screen.getByText(/^3$/)).toBeInTheDocument()
+    expect(screen.getByText('2m 5s')).toBeInTheDocument()
   })
 
   it('shows an error banner when provided', () => {
@@ -50,7 +76,7 @@ describe('RunStatus', () => {
       />,
     )
 
-    expect(screen.getAllByText(/quota reached/i).length).toBeGreaterThan(1)
+    expect(screen.getByText(/quota reached/i)).toBeInTheDocument()
     expect(screen.getByText(/results are partial/i)).toBeInTheDocument()
   })
 })

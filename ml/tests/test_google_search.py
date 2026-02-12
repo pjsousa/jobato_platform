@@ -68,3 +68,14 @@ def test_mock_search_client_is_deterministic():
     assert len(second) == 1
     assert first[0].link == second[0].link
     assert first[0].display_link == "example.com"
+
+
+def test_mock_search_client_returns_zero_results_for_and_queries():
+    client = DeterministicMockSearchClient(logger=logging.getLogger("test"))
+
+    results = client.search(
+        run_id="run-3",
+        search_query="site:workable.com senior AND remote AND python",
+    )
+
+    assert results == []

@@ -40,6 +40,11 @@ class ResultRepository:
             visible_text=result.visible_text,
             fetch_error=result.fetch_error,
             extract_error=result.extract_error,
+            cache_key=result.cache_key,
+            cached_at=result.cached_at,
+            cache_expires_at=result.cache_expires_at,
+            last_seen_at=result.last_seen_at,
+            skip_reason=result.skip_reason,
         )
 
 
