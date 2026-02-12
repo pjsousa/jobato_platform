@@ -105,7 +105,15 @@ Capture raw HTML and visible text per result, with resilient per-item error hand
 
 ### Gate 2.4 commands
 
+Note: this gate creates a temporary unique query to prevent revisit-throttle carryover from masking HTML/text capture behavior.
+
 ```bash
+GATE_QUERY="gate-2-4-html-$(date +%s)-$RANDOM"
+QUERY_JSON=$(curl -s -X POST http://localhost:8080/api/queries \
+  -H "Content-Type: application/json" \
+  -d "{\"text\":\"${GATE_QUERY}\"}")
+QUERY_ID=$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["id"])' "$QUERY_JSON")
+
 RUN_ID=$(curl -s -X POST http://localhost:8080/api/runs | python3 -c 'import sys,json; print(json.load(sys.stdin)["runId"])')
 
 for i in {1..30}; do
@@ -114,20 +122,29 @@ for i in {1..30}; do
   sleep 2
 done
 
-sqlite3 "data/db/runs/${RUN_ID}.db" "SELECT COUNT(*) FROM run_items WHERE raw_html_path IS NOT NULL;"
-sqlite3 "data/db/runs/${RUN_ID}.db" "SELECT COUNT(*) FROM run_items WHERE visible_text IS NOT NULL AND length(visible_text) > 0;"
+sqlite3 "data/db/runs/${RUN_ID}.db" "SELECT COUNT(*) FROM run_items WHERE query_text='${GATE_QUERY}' AND skip_reason IS NULL;"
+sqlite3 "data/db/runs/${RUN_ID}.db" "SELECT COUNT(*) FROM run_items WHERE query_text='${GATE_QUERY}' AND raw_html_path IS NOT NULL;"
+sqlite3 "data/db/runs/${RUN_ID}.db" "SELECT COUNT(*) FROM run_items WHERE query_text='${GATE_QUERY}' AND visible_text IS NOT NULL AND length(visible_text) > 0;"
 
-HTML_PATH=$(sqlite3 "data/db/runs/${RUN_ID}.db" "SELECT raw_html_path FROM run_items WHERE raw_html_path IS NOT NULL LIMIT 1;")
+HTML_PATH=$(sqlite3 "data/db/runs/${RUN_ID}.db" "SELECT raw_html_path FROM run_items WHERE query_text='${GATE_QUERY}' AND raw_html_path IS NOT NULL LIMIT 1;")
 test -f "$HTML_PATH" && echo "OK"
 
 PYTHONPATH=ml python3 -m pytest ml/tests/test_html_services.py ml/tests/test_ingestion_html_integration.py
+
+# cleanup: disable temporary gate query
+curl -s -X PATCH "http://localhost:8080/api/queries/${QUERY_ID}" \
+  -H "Content-Type: application/json" \
+  -d '{"enabled":false}' >/dev/null
 ```
 
 ### Pass criteria
 
-- At least one persisted row has `raw_html_path` and `visible_text`.
+- Temporary gate query is created successfully.
+- At least one row for that gate query is not throttled (`skip_reason IS NULL`).
+- At least one persisted row for that gate query has `raw_html_path` and `visible_text`.
 - Referenced HTML file exists on disk.
 - HTML tests pass.
+- Temporary gate query is disabled during cleanup.
 
 ---
 
