@@ -46,7 +46,7 @@ class BaselineModel(ModelInterface):
         # Baseline model doesn't train - just return self
         return self
     
-    def predict(self, X: "pd.DataFrame | np.ndarray") -> "np.ndarray":
+    def predict(self, X: "pd.DataFrame | np.ndarray") -> list[float]:
         """Predict relevance scores.
         
         Returns an array of zeros with length matching the input.
@@ -57,8 +57,6 @@ class BaselineModel(ModelInterface):
         Returns:
             Array of zeros (n_samples,)
         """
-        import numpy as np
-        
         # Get number of samples from input
         if hasattr(X, 'shape'):
             n_samples = X.shape[0]
@@ -66,9 +64,9 @@ class BaselineModel(ModelInterface):
             n_samples = len(X)
         else:
             n_samples = 1
-        
+
         # Return neutral scores
-        return np.zeros(n_samples, dtype=float)
+        return [0.0] * n_samples
     
     @property
     def version(self) -> str:

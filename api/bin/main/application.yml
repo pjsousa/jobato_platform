@@ -15,6 +15,8 @@ spring:
 jobato:
   cors:
     allowed-origins: http://localhost:5173,http://127.0.0.1:5173
+  ml:
+    base-url: ${ML_BASE_URL:http://localhost:8000}
 
 management:
   endpoints:
