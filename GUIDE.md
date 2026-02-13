@@ -257,7 +257,7 @@ RUN_ID=$(curl -s -X POST http://localhost:8080/api/runs | python3 -c 'import sys
 for i in {1..30}; do
   STATUS=$(curl -s "http://localhost:8080/api/runs/$RUN_ID" | python3 -c 'import sys,json; print(json.load(sys.stdin)["status"])')
   [ "$STATUS" != "running" ] && break
-  sleep 2
+  sleep 0
 done
 ```
 3. Confirm normalized URLs are persisted:
