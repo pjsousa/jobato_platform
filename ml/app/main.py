@@ -1,5 +1,6 @@
 import os
 import logging
+from datetime import timezone
 from pathlib import Path
 
 import redis
@@ -12,6 +13,8 @@ from app.pipelines.evaluation import EvaluationPipeline, get_results, get_status
 from app.services.evaluation_store import EvaluationStore
 from app.services.model_activation import ModelActivationError, ModelActivationService
 from app.services.model_selector import ModelSelector
+from app.pipelines.retrain import RetrainInProgressError, RetrainPipeline
+from app.services.retrain_scheduler import DailyRetrainScheduler
 
 app = FastAPI()
 logger = logging.getLogger(__name__)
@@ -23,6 +26,15 @@ _evaluation_store: EvaluationStore | None = None
 _evaluation_pipeline: EvaluationPipeline | None = None
 _model_activation_service: ModelActivationService | None = None
 _model_selector: ModelSelector | None = None
+_retrain_pipeline: RetrainPipeline | None = None
+_retrain_scheduler: DailyRetrainScheduler | None = None
+
+
+def _env_bool(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _registry_config_path() -> Path:
@@ -161,9 +173,39 @@ def evaluation_results(evaluation_id: str) -> dict:
     return get_results(_evaluation_store, evaluation_id)
 
 
+@app.post("/ml/retrain/trigger", status_code=status.HTTP_202_ACCEPTED)
+def trigger_retrain() -> dict:
+    if _retrain_pipeline is None:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Retrain service unavailable")
+    try:
+        _retrain_pipeline.run_once(triggered_by="manual")
+    except RetrainInProgressError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return {"job": _retrain_pipeline.status_payload()["latest"]}
+
+
+@app.get("/ml/retrain/status")
+def retrain_status() -> dict:
+    if _retrain_pipeline is None:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Retrain service unavailable")
+    payload = _retrain_pipeline.status_payload()
+    if _retrain_scheduler is not None:
+        payload["nextScheduledAt"] = _retrain_scheduler.next_run_at.astimezone(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return payload
+
+
+@app.get("/ml/retrain/history")
+def retrain_history() -> dict:
+    if _retrain_pipeline is None:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Retrain service unavailable")
+    return _retrain_pipeline.history_payload()
+
+
 @app.on_event("startup")
 def startup() -> None:
-    global _run_events_worker, _evaluation_store, _evaluation_pipeline, _model_activation_service, _model_selector
+    global _run_events_worker, _evaluation_store, _evaluation_pipeline, _model_activation_service, _model_selector, _retrain_pipeline, _retrain_scheduler
 
     config_path = _registry_config_path()
     registry = initialize_registry(config_path)
@@ -178,6 +220,27 @@ def startup() -> None:
     _evaluation_pipeline = EvaluationPipeline(store=_evaluation_store, registry=registry)
     _model_activation_service = ModelActivationService(store=_evaluation_store, registry=registry)
     _model_selector = ModelSelector(_evaluation_store)
+    _retrain_pipeline = RetrainPipeline(
+        store=_evaluation_store,
+        registry=registry,
+        data_dir=Path(os.getenv("DATA_DIR", "data")),
+    )
+
+    def scheduled_retrain() -> None:
+        if _retrain_pipeline is None:
+            return
+        try:
+            _retrain_pipeline.run_once(triggered_by="scheduled")
+        except Exception as exc:
+            logger.warning("retrain.scheduled_failed error=%s", exc)
+
+    schedule = os.getenv("RETRAIN_SCHEDULE", "0 6 * * *")
+    _retrain_scheduler = DailyRetrainScheduler(
+        trigger=scheduled_retrain,
+        schedule=schedule,
+        enabled=_env_bool("RETRAIN_ENABLED", True),
+    )
+    _retrain_scheduler.start()
 
     _run_events_worker = RunEventsWorker()
     _run_events_worker.start()
@@ -187,3 +250,5 @@ def startup() -> None:
 def shutdown() -> None:
     if _run_events_worker is not None:
         _run_events_worker.stop()
+    if _retrain_scheduler is not None:
+        _retrain_scheduler.stop()

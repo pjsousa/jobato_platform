@@ -55,6 +55,21 @@ class ModelActivationHistoryRow:
     evaluation_id: str | None
 
 
+@dataclass(frozen=True)
+class RetrainJobRow:
+    job_id: str
+    model_id: str
+    previous_version: str | None
+    new_version: str | None
+    status: str
+    started_at: str
+    completed_at: str | None
+    label_count: int
+    metrics: dict[str, float]
+    error_message: str | None
+    triggered_by: str
+
+
 class EvaluationStore:
     def __init__(self, db_path: Path) -> None:
         self._db_path = db_path
@@ -400,6 +415,180 @@ class EvaluationStore:
             for row in rows
         ]
 
+    def create_retrain_job(
+        self,
+        *,
+        job_id: str,
+        model_id: str,
+        previous_version: str | None,
+        triggered_by: str,
+    ) -> RetrainJobRow:
+        started_at = _timestamp_now()
+        with self._lock:
+            with self._connect() as conn:
+                conn.execute(
+                    """
+                    INSERT INTO retrain_jobs (
+                        job_id,
+                        model_id,
+                        previous_version,
+                        new_version,
+                        status,
+                        started_at,
+                        completed_at,
+                        label_count,
+                        metrics_json,
+                        error_message,
+                        triggered_by
+                    ) VALUES (?, ?, ?, NULL, 'running', ?, NULL, 0, ?, NULL, ?)
+                    """,
+                    (job_id, model_id, previous_version, started_at, "{}", triggered_by),
+                )
+                conn.commit()
+        return RetrainJobRow(
+            job_id=job_id,
+            model_id=model_id,
+            previous_version=previous_version,
+            new_version=None,
+            status="running",
+            started_at=started_at,
+            completed_at=None,
+            label_count=0,
+            metrics={},
+            error_message=None,
+            triggered_by=triggered_by,
+        )
+
+    def complete_retrain_job(
+        self,
+        *,
+        job_id: str,
+        status: str,
+        new_version: str | None,
+        label_count: int,
+        metrics: dict[str, float],
+        error_message: str | None = None,
+    ) -> None:
+        completed_at = _timestamp_now()
+        with self._lock:
+            with self._connect() as conn:
+                conn.execute(
+                    """
+                    UPDATE retrain_jobs
+                    SET status = ?,
+                        new_version = ?,
+                        completed_at = ?,
+                        label_count = ?,
+                        metrics_json = ?,
+                        error_message = ?
+                    WHERE job_id = ?
+                    """,
+                    (
+                        status,
+                        new_version,
+                        completed_at,
+                        label_count,
+                        json.dumps(metrics),
+                        error_message,
+                        job_id,
+                    ),
+                )
+                conn.commit()
+
+    def get_retrain_job(self, job_id: str) -> RetrainJobRow | None:
+        with self._connect() as conn:
+            row = conn.execute(
+                """
+                SELECT job_id,
+                       model_id,
+                       previous_version,
+                       new_version,
+                       status,
+                       started_at,
+                       completed_at,
+                       label_count,
+                       metrics_json,
+                       error_message,
+                       triggered_by
+                FROM retrain_jobs
+                WHERE job_id = ?
+                """,
+                (job_id,),
+            ).fetchone()
+        return _to_retrain_job_row(row)
+
+    def get_latest_retrain_job(self) -> RetrainJobRow | None:
+        with self._connect() as conn:
+            row = conn.execute(
+                """
+                SELECT job_id,
+                       model_id,
+                       previous_version,
+                       new_version,
+                       status,
+                       started_at,
+                       completed_at,
+                       label_count,
+                       metrics_json,
+                       error_message,
+                       triggered_by
+                FROM retrain_jobs
+                ORDER BY started_at DESC
+                LIMIT 1
+                """
+            ).fetchone()
+        return _to_retrain_job_row(row)
+
+    def list_retrain_jobs(self, limit: int = 50) -> list[RetrainJobRow]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT job_id,
+                       model_id,
+                       previous_version,
+                       new_version,
+                       status,
+                       started_at,
+                       completed_at,
+                       label_count,
+                       metrics_json,
+                       error_message,
+                       triggered_by
+                FROM retrain_jobs
+                ORDER BY started_at DESC
+                LIMIT ?
+                """,
+                (limit,),
+            ).fetchall()
+        return [result for result in (_to_retrain_job_row(row) for row in rows) if result is not None]
+
+    def has_running_retrain_job(self) -> bool:
+        with self._connect() as conn:
+            row = conn.execute(
+                """
+                SELECT 1
+                FROM retrain_jobs
+                WHERE status = 'running'
+                LIMIT 1
+                """
+            ).fetchone()
+        return row is not None
+
+    def get_last_completed_retrain_at(self) -> str | None:
+        with self._connect() as conn:
+            row = conn.execute(
+                """
+                SELECT completed_at
+                FROM retrain_jobs
+                WHERE status IN ('completed', 'skipped')
+                ORDER BY completed_at DESC
+                LIMIT 1
+                """
+            ).fetchone()
+        if row is None:
+            return None
+        return row[0]
+
     def _ensure_schema(self) -> None:
         with self._lock:
             with self._connect() as conn:
@@ -481,6 +670,30 @@ class EvaluationStore:
                     ON model_activation_history(timestamp)
                     """
                 )
+                conn.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS retrain_jobs (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        job_id TEXT NOT NULL UNIQUE,
+                        model_id TEXT NOT NULL,
+                        previous_version TEXT,
+                        new_version TEXT,
+                        status TEXT NOT NULL,
+                        started_at TEXT NOT NULL,
+                        completed_at TEXT,
+                        label_count INTEGER NOT NULL DEFAULT 0,
+                        metrics_json TEXT NOT NULL,
+                        error_message TEXT,
+                        triggered_by TEXT NOT NULL
+                    )
+                    """
+                )
+                conn.execute(
+                    """
+                    CREATE INDEX IF NOT EXISTS idx_retrain_jobs__started_at
+                    ON retrain_jobs(started_at)
+                    """
+                )
                 conn.commit()
 
     def _connect(self) -> sqlite3.Connection:
@@ -490,3 +703,21 @@ class EvaluationStore:
 def _timestamp_now() -> str:
     now = datetime.now(timezone.utc).replace(microsecond=0)
     return now.isoformat().replace("+00:00", "Z")
+
+
+def _to_retrain_job_row(row: tuple | None) -> RetrainJobRow | None:
+    if row is None:
+        return None
+    return RetrainJobRow(
+        job_id=row[0],
+        model_id=row[1],
+        previous_version=row[2],
+        new_version=row[3],
+        status=row[4],
+        started_at=row[5],
+        completed_at=row[6],
+        label_count=int(row[7] or 0),
+        metrics=json.loads(row[8]) if row[8] else {},
+        error_message=row[9],
+        triggered_by=row[10],
+    )
