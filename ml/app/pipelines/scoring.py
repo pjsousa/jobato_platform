@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import select
 
 from app.db.models import RunResult
+from app.registry import get_registry
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
@@ -33,7 +34,8 @@ class ScoringOutcome:
 def score_run_results(
     session: Session,
     run_id: str,
-    score_version: str = DEFAULT_SCORE_VERSION,
+    score_version: str | None = None,
+    model_identifier: str | None = None,
     now: datetime | None = None,
 ) -> ScoringOutcome:
     """Assign relevance scores to all non-duplicate results for a run.
@@ -44,7 +46,8 @@ def score_run_results(
     Args:
         session: Database session
         run_id: The run ID to score
-        score_version: Model version identifier (default: "baseline")
+        score_version: Model version identifier override
+        model_identifier: Optional model identifier to score with
         now: Optional timestamp for scoring (defaults to UTC now)
         
     Returns:
@@ -66,9 +69,50 @@ def score_run_results(
         return ScoringOutcome(scored_count=0, skipped_count=0)
     
     logger.info("scoring.start run_id=%s count=%d", run_id, len(results))
-    
+
+    selected_model = None
+    resolved_version = score_version or DEFAULT_SCORE_VERSION
+    if model_identifier:
+        registry = get_registry()
+        if registry.is_initialized:
+            selected_model = registry.get_model(model_identifier)
+            if selected_model is None:
+                logger.warning(
+                    "scoring.model_not_found model=%s fallback=%s",
+                    model_identifier,
+                    DEFAULT_SCORE_VERSION,
+                )
+            elif score_version is None:
+                resolved_version = selected_model.version
+
+    predictions: list[float] | None = None
+    if selected_model is not None:
+        features = [
+            {
+                "title": result.title,
+                "snippet": result.snippet,
+                "domain": result.domain,
+            }
+            for result in results
+            if not result.is_duplicate
+        ]
+        try:
+            raw_predictions = selected_model.predict(features)
+            predictions = [validate_score(float(value)) for value in raw_predictions]
+        except Exception as exc:
+            logger.warning(
+                "scoring.model_failed model=%s error=%s fallback=%s",
+                model_identifier,
+                exc,
+                DEFAULT_SCORE_VERSION,
+            )
+            predictions = None
+            if score_version is None:
+                resolved_version = DEFAULT_SCORE_VERSION
+
     scored_count = 0
     skipped_count = 0
+    prediction_index = 0
     
     for result in results:
         if result.is_duplicate:
@@ -80,15 +124,18 @@ def score_run_results(
             )
             continue
         
-        # Assign baseline score to canonical records
-        result.relevance_score = DEFAULT_SCORE
+        if predictions is not None and prediction_index < len(predictions):
+            result.relevance_score = predictions[prediction_index]
+            prediction_index += 1
+        else:
+            result.relevance_score = DEFAULT_SCORE
         result.scored_at = scored_at
-        result.score_version = score_version
+        result.score_version = resolved_version
         scored_count += 1
         
         logger.debug(
             "scoring.assigned id=%d score=%f version=%s",
-            result.id, DEFAULT_SCORE, score_version
+            result.id, result.relevance_score, resolved_version
         )
     
     # Commit all changes
