@@ -1,6 +1,6 @@
-# Jobato Epic 1 & 2 Guide
+# Jobato Epic 1, 2, and Epic 3 Rollout Guide
 
-This guide describes how to run Jobato and perform basic Epic 1 and Epic 2 verification flows using Docker Compose and API calls.
+This guide describes how to run Jobato and perform basic Epic 1 and Epic 2 verification flows, plus the upcoming Epic 3 rollout checks, using Docker Compose and API calls.
 
 ## What Runs
 
@@ -229,6 +229,123 @@ curl -i http://localhost:8080/api/reports/runs/latest
 
 2. Zero-result queries should be logged by the ML worker; check ML logs when a query/domain returns zero results.
 
+## Epic 3 Rollout Guide (What We Will Start Doing Very Soon)
+
+Epic 3 is being delivered story-by-story. Use the steps below to validate each new capability as soon as it lands.
+Until a given story is merged, that step may return `404` or missing-field responses.
+
+### Step 0: Pre-Gate (confirm baseline before Epic 3 checks)
+
+1. Start services and verify health:
+```bash
+docker compose up -d --build
+curl -i http://localhost:8080/api/health
+curl -i http://localhost:8000/health
+curl -i http://localhost:8080/api/reports/runs/latest
+PYTHONPATH=ml python3 -m pytest ml/tests/test_ingestion.py
+```
+
+### Step 1: URL normalization for stable dedupe keys (Story 3.1)
+
+1. Run normalization-focused tests:
+```bash
+PYTHONPATH=ml python3 -m pytest ml/tests/test_url_normalization.py ml/tests/test_ingestion.py
+```
+2. Trigger a run and wait for completion:
+```bash
+RUN_ID=$(curl -s -X POST http://localhost:8080/api/runs | python3 -c 'import sys,json; print(json.load(sys.stdin)["runId"])')
+for i in {1..30}; do
+  STATUS=$(curl -s "http://localhost:8080/api/runs/$RUN_ID" | python3 -c 'import sys,json; print(json.load(sys.stdin)["status"])')
+  [ "$STATUS" != "running" ] && break
+  sleep 2
+done
+```
+3. Confirm normalized URLs are persisted:
+```bash
+sqlite3 "data/db/runs/${RUN_ID}.db" "PRAGMA table_info(run_items);"
+sqlite3 "data/db/runs/${RUN_ID}.db" "SELECT COUNT(*) FROM run_items WHERE normalized_url IS NOT NULL;"
+```
+
+### Step 2: Duplicate detection and canonical linking (Story 3.2)
+
+1. Run dedupe tests:
+```bash
+PYTHONPATH=ml python3 -m pytest ml/tests/test_dedupe.py ml/tests/test_ingestion_dedupe.py
+./api/gradlew test --tests "com.jobato.api.controller.ResultsControllerTest" --tests "com.jobato.api.service.ResultServiceTest"
+```
+2. Trigger a run and wait for completion (reuse Step 1 run loop if preferred).
+3. Confirm duplicate linkage fields are being populated:
+```bash
+sqlite3 "data/db/runs/${RUN_ID}.db" "SELECT COUNT(*) FROM run_items WHERE is_duplicate = 1;"
+sqlite3 "data/db/runs/${RUN_ID}.db" "SELECT COUNT(*) FROM run_items WHERE canonical_id IS NOT NULL;"
+```
+
+### Step 3: Baseline relevance scoring (Story 3.3)
+
+1. Run scoring tests:
+```bash
+PYTHONPATH=ml python3 -m pytest ml/tests/test_scoring.py ml/tests/test_ingestion_scoring.py
+./api/gradlew test --tests "com.jobato.api.controller.ResultsControllerTest" --tests "com.jobato.api.service.ResultServiceTest"
+```
+2. Trigger a run and wait for completion (reuse Step 1 run loop if preferred).
+3. Verify score persistence and range:
+```bash
+sqlite3 "data/db/runs/${RUN_ID}.db" "SELECT MIN(relevance_score), MAX(relevance_score), COUNT(*) FROM run_items WHERE relevance_score IS NOT NULL;"
+```
+
+### Step 4: Pluggable model registry discovery (Story 3.4)
+
+1. Run model interface/registry tests:
+```bash
+PYTHONPATH=ml python3 -m pytest ml/tests/test_model_interface.py ml/tests/test_registry.py
+```
+2. Verify ML model discovery endpoints:
+```bash
+curl -i http://localhost:8000/health
+curl -i http://localhost:8000/ml/models
+```
+
+### Step 5: Parallel candidate evaluation (Story 3.5)
+
+1. Run evaluation pipeline tests:
+```bash
+PYTHONPATH=ml python3 -m pytest ml/tests/test_evaluation_worker.py ml/tests/test_metrics.py ml/tests/test_evaluation_pipeline.py
+```
+2. Trigger evaluation and inspect status/results:
+```bash
+curl -i -X POST http://localhost:8080/api/ml/evaluations
+curl -i http://localhost:8080/api/ml/evaluations/<evaluationId>
+curl -i http://localhost:8080/api/ml/evaluations/<evaluationId>/results
+```
+
+### Step 6: Model comparison, activation, and rollback path (Story 3.6)
+
+1. Run activation/comparison tests:
+```bash
+PYTHONPATH=ml python3 -m pytest ml/tests/test_model_activation.py ml/tests/test_model_selector.py
+./api/gradlew test --tests "com.jobato.api.controller.MlModelControllerTest" --tests "com.jobato.api.service.MlModelClientTest"
+```
+2. Compare candidates and activate a model:
+```bash
+curl -i http://localhost:8080/api/ml/models/comparisons
+curl -i -X POST http://localhost:8080/api/ml/models/<modelId>/activate
+curl -i http://localhost:8080/api/ml/models/active
+```
+
+### Step 7: Daily retrain and manual retrain operations (Story 3.7)
+
+1. Run retrain tests:
+```bash
+PYTHONPATH=ml python3 -m pytest ml/tests/test_retrain_scheduler.py ml/tests/test_retrain_pipeline.py ml/tests/test_retrain_no_labels.py
+./api/gradlew test --tests "com.jobato.api.controller.RetrainControllerTest"
+```
+2. Trigger retrain and inspect status/history:
+```bash
+curl -i -X POST http://localhost:8080/api/ml/retrain/trigger
+curl -i http://localhost:8080/api/ml/retrain/status
+curl -i http://localhost:8080/api/ml/retrain/history
+```
+
 ## Disclaimer
 
-This guide reflects the state of the project at the end of Epic 2 as of February 8, 2026. Subsequent epics may change commands, endpoints, or verification steps.
+This guide reflects the state of the project through Epic 2 and the planned Epic 3 rollout checks as of February 13, 2026. As Epic 3 stories are merged, commands and endpoint contracts may be refined.
