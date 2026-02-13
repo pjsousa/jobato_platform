@@ -50,6 +50,9 @@ class ResultRepository:
             is_duplicate=result.is_duplicate,
             is_hidden=result.is_hidden,
             duplicate_count=result.duplicate_count,
+            relevance_score=result.relevance_score,
+            scored_at=result.scored_at,
+            score_version=result.score_version,
         )
 
 

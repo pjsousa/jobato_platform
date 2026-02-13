@@ -74,7 +74,8 @@ class ResultsControllerTest {
             1, runId, "q1", "test query", "site:example.com test", "example.com",
             "Test Job", "Test snippet", "https://example.com/job/1", "https://example.com/job/1",
             "2026-02-13T10:00:00Z", null, null, null, null, null, "hash123",
-            null, false, false, 2  // canonicalId, isDuplicate, isHidden, duplicateCount
+            null, false, false, 2,  // canonicalId, isDuplicate, isHidden, duplicateCount
+            0.0, "2026-02-13T10:00:00Z", "baseline"  // relevanceScore, scoredAt, scoreVersion
         );
         when(resultService.getResultsForRun(runId, false)).thenReturn(Arrays.asList(result));
 
@@ -100,13 +101,15 @@ class ResultsControllerTest {
             duplicateId, "test-run", "q1", "test", "site:example.com test", "example.com",
             "Duplicate Job", "Duplicate snippet", "https://example.com/job/2", "https://example.com/job/2",
             "2026-02-13T10:00:00Z", null, null, null, null, null, "hash2",
-            canonicalId, true, true, 0
+            canonicalId, true, true, 0,
+            null, null, null  // relevanceScore, scoredAt, scoreVersion - duplicates inherit
         );
         ResultItem canonical = new ResultItem(
             canonicalId, "test-run", "q1", "test", "site:example.com test", "example.com",
             "Canonical Job", "Canonical snippet", "https://example.com/job/1", "https://example.com/job/1",
             "2026-02-13T09:00:00Z", null, null, null, null, null, "hash1",
-            null, false, false, 1
+            null, false, false, 1,
+            0.5, "2026-02-13T09:00:00Z", "baseline"  // relevanceScore, scoredAt, scoreVersion
         );
         when(resultService.getResultById(duplicateId)).thenReturn(Optional.of(duplicate));
         when(resultService.getCanonicalRecord(duplicateId)).thenReturn(Optional.of(canonical));
@@ -181,13 +184,62 @@ class ResultsControllerTest {
         assertEquals(false, counts.get("includeHidden"));
     }
 
+    @Test
+    void getResults_returnsScoringFields() {
+        // Arrange
+        String runId = "test-run-1";
+        ResultItem result = new ResultItem(
+            1, runId, "q1", "test query", "site:example.com test", "example.com",
+            "Test Job", "Test snippet", "https://example.com/job/1", "https://example.com/job/1",
+            "2026-02-13T10:00:00Z", null, null, null, null, null, "hash123",
+            null, false, false, 0,
+            0.75, "2026-02-13T10:00:00Z", "baseline"
+        );
+        when(resultService.getResultsForRun(runId, false)).thenReturn(Arrays.asList(result));
+
+        // Act
+        ResponseEntity<List<Map<String, Object>>> response = resultsController.getResults(runId, false);
+
+        // Assert
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        Map<String, Object> resultMap = response.getBody().get(0);
+        assertEquals(0.75, resultMap.get("relevanceScore"));
+        assertEquals("2026-02-13T10:00:00Z", resultMap.get("scoredAt"));
+        assertEquals("baseline", resultMap.get("scoreVersion"));
+    }
+
+    @Test
+    void getResults_returnsNullScoringFieldsWhenNotScored() {
+        // Arrange
+        String runId = "test-run-1";
+        ResultItem result = new ResultItem(
+            1, runId, "q1", "test query", "site:example.com test", "example.com",
+            "Test Job", "Test snippet", "https://example.com/job/1", "https://example.com/job/1",
+            "2026-02-13T10:00:00Z", null, null, null, null, null, "hash123",
+            null, false, false, 0,
+            null, null, null  // Not yet scored
+        );
+        when(resultService.getResultsForRun(runId, false)).thenReturn(Arrays.asList(result));
+
+        // Act
+        ResponseEntity<List<Map<String, Object>>> response = resultsController.getResults(runId, false);
+
+        // Assert
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        Map<String, Object> resultMap = response.getBody().get(0);
+        assertNull(resultMap.get("relevanceScore"));
+        assertNull(resultMap.get("scoredAt"));
+        assertNull(resultMap.get("scoreVersion"));
+    }
+
     private ResultItem createResultItem(int id, String runId, boolean isHidden) {
         return new ResultItem(
             id, runId, "q1", "test query", "site:example.com test", "example.com",
             "Test Job " + id, "Test snippet", "https://example.com/job/" + id,
             "https://example.com/job/" + id, "2026-02-13T10:00:00Z",
             null, null, null, null, null, "hash" + id,
-            null, false, isHidden, 0
+            null, false, isHidden, 0,
+            0.0, "2026-02-13T10:00:00Z", "baseline"
         );
     }
 }

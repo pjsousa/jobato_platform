@@ -14,6 +14,7 @@ services:
       CONFIG_DIR: /app/config
       DATA_DIR: /app/data
       JOBATO_SEARCH_PROVIDER: ${JOBATO_SEARCH_PROVIDER:-mock}
+      ML_BASE_URL: http://ml:8000
     volumes:
       - ./config:/app/config
       - ./data:/app/data

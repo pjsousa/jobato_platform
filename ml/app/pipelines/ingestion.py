@@ -17,6 +17,7 @@ from app.services.html_fetcher import HtmlFetcher
 from app.services.html_extractor import HtmlExtractor
 from app.services.url_normalizer import normalize_url
 from app.pipelines.dedupe import dedupe_run_results, DedupeOutcome
+from app.pipelines.scoring import score_run_results, ScoringOutcome
 
 
 @dataclass(frozen=True)
@@ -50,6 +51,7 @@ class IngestionOutcome:
     new_jobs_count: int
     zero_results: list["ZeroResultObservation"]
     dedupe_outcome: DedupeOutcome | None = None
+    scoring_outcome: ScoringOutcome | None = None
 
 
 @dataclass(frozen=True)
@@ -126,6 +128,7 @@ def ingest_run(
     cache_policy: CachePolicy | None = None,
     cache_service: CacheService | None = None,
     dedupe_enabled: bool = True,
+    scoring_enabled: bool = True,
 ) -> IngestionOutcome:
     writer = result_writer
     session = None
@@ -314,6 +317,7 @@ def ingest_run(
             )
 
     dedupe_outcome = None
+    scoring_outcome = None
     try:
         persisted = writer.write_all(pending_results)
         
@@ -324,6 +328,13 @@ def ingest_run(
             except Exception as e:
                 logger.warning("dedupe.failed run_id=%s error=%s", run_id, e)
         
+        # Run scoring if enabled and we have a session
+        if scoring_enabled and session is not None and persisted > 0:
+            try:
+                scoring_outcome = score_run_results(session, run_id, now=timestamp)
+            except Exception as e:
+                logger.warning("scoring.failed run_id=%s error=%s", run_id, e)
+        
         return IngestionOutcome(
             issued_calls=issued_calls,
             persisted_results=persisted,
@@ -331,6 +342,7 @@ def ingest_run(
             new_jobs_count=new_jobs_count,
             zero_results=zero_results,
             dedupe_outcome=dedupe_outcome,
+            scoring_outcome=scoring_outcome,
         )
     finally:
         if session is not None:

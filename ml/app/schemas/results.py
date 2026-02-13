@@ -40,3 +40,7 @@ class ResultMetadata:
     is_duplicate: bool = False
     is_hidden: bool = False
     duplicate_count: int = 0
+    # Scoring fields
+    relevance_score: float | None = None
+    scored_at: str | None = None
+    score_version: str | None = None

@@ -1,0 +1,16 @@
+# Model Registry Configuration
+# Defines available ML models for scoring
+
+# Default model to use when none specified
+# Must match an enabled model identifier
+default_model: baseline
+
+# Available models
+models:
+  - identifier: baseline
+    module_path: app.models.stub_model
+    class_name: BaselineModel
+    version: "1.0.0"
+    name: "Baseline Model"
+    description: "Default fallback model that assigns neutral relevance scores (0.0) to all results."
+    enabled: true

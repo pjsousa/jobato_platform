@@ -128,6 +128,10 @@ public class ResultsController {
         response.put("isDuplicate", result.getIsDuplicate());
         response.put("isHidden", result.getIsHidden());
         response.put("duplicateCount", result.getDuplicateCount());
+        // Scoring fields - camelCase for API
+        response.put("relevanceScore", result.getRelevanceScore());
+        response.put("scoredAt", result.getScoredAt());
+        response.put("scoreVersion", result.getScoreVersion());
         return response;
     }
 

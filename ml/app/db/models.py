@@ -16,6 +16,8 @@ class RunResult(Base):
         Index("idx_run_items__canonical_id", "canonical_id"),
         Index("idx_run_items__is_duplicate", "is_duplicate"),
         Index("idx_run_items__is_hidden", "is_hidden"),
+        Index("idx_run_items__relevance_score", "relevance_score"),
+        Index("idx_run_items__scored_at", "scored_at"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -47,3 +49,7 @@ class RunResult(Base):
     is_duplicate: Mapped[bool] = mapped_column(Integer, default=False)
     is_hidden: Mapped[bool] = mapped_column(Integer, default=False)
     duplicate_count: Mapped[int] = mapped_column(Integer, default=0)
+    # Scoring fields
+    relevance_score: Mapped[float | None] = mapped_column(nullable=True)
+    scored_at: Mapped[str | None] = mapped_column(String, nullable=True)
+    score_version: Mapped[str | None] = mapped_column(String, nullable=True)
