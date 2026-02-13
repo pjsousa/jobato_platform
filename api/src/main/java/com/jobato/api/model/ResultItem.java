@@ -23,13 +23,18 @@ public class ResultItem {
     private final Boolean isDuplicate;
     private final Boolean isHidden;
     private final Integer duplicateCount;
+    // Scoring fields
+    private final Double relevanceScore;
+    private final String scoredAt;
+    private final String scoreVersion;
 
     public ResultItem(Integer id, String runId, String queryId, String queryText,
                       String searchQuery, String domain, String title, String snippet,
                       String rawUrl, String finalUrl, String createdAt, String rawHtmlPath,
                       String visibleText, String cacheKey, String cachedAt, String lastSeenAt,
                       String normalizedUrl, Integer canonicalId, Boolean isDuplicate,
-                      Boolean isHidden, Integer duplicateCount) {
+                      Boolean isHidden, Integer duplicateCount, Double relevanceScore,
+                      String scoredAt, String scoreVersion) {
         this.id = id;
         this.runId = runId;
         this.queryId = queryId;
@@ -51,6 +56,9 @@ public class ResultItem {
         this.isDuplicate = isDuplicate;
         this.isHidden = isHidden;
         this.duplicateCount = duplicateCount;
+        this.relevanceScore = relevanceScore;
+        this.scoredAt = scoredAt;
+        this.scoreVersion = scoreVersion;
     }
 
     // Getters
@@ -75,4 +83,7 @@ public class ResultItem {
     public Boolean getIsDuplicate() { return isDuplicate; }
     public Boolean getIsHidden() { return isHidden; }
     public Integer getDuplicateCount() { return duplicateCount; }
+    public Double getRelevanceScore() { return relevanceScore; }
+    public String getScoredAt() { return scoredAt; }
+    public String getScoreVersion() { return scoreVersion; }
 }

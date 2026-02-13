@@ -214,6 +214,52 @@ class ResultServiceTest {
         assertFalse(returned.isPresent());
     }
 
+    @Test
+    void getResultById_returnsScoringFields() {
+        // Arrange
+        Integer resultId = 1;
+        ResultItem result = new ResultItem(
+            resultId, "test-run", "q1", "test query", "site:example.com test", "example.com",
+            "Test Job", "Test snippet", "https://example.com/job/1", "https://example.com/job/1",
+            "2026-02-13T10:00:00Z", null, null, null, null, null, "hash1",
+            null, false, false, 0,
+            0.85, "2026-02-13T10:00:00Z", "v1.0.0"
+        );
+        when(resultRepository.findById(resultId)).thenReturn(Optional.of(result));
+
+        // Act
+        Optional<ResultItem> returned = resultService.getResultById(resultId);
+
+        // Assert
+        assertTrue(returned.isPresent());
+        assertEquals(0.85, returned.get().getRelevanceScore());
+        assertEquals("2026-02-13T10:00:00Z", returned.get().getScoredAt());
+        assertEquals("v1.0.0", returned.get().getScoreVersion());
+    }
+
+    @Test
+    void getResultsForRun_returnsResultsWithScoringFields() {
+        // Arrange
+        String runId = "test-run";
+        ResultItem scoredResult = new ResultItem(
+            1, runId, "q1", "test query", "site:example.com test", "example.com",
+            "Test Job", "Test snippet", "https://example.com/job/1", "https://example.com/job/1",
+            "2026-02-13T10:00:00Z", null, null, null, null, null, "hash1",
+            null, false, false, 0,
+            0.5, "2026-02-13T10:00:00Z", "baseline"
+        );
+        when(resultRepository.findByRunId(runId, false)).thenReturn(Arrays.asList(scoredResult));
+
+        // Act
+        List<ResultItem> results = resultService.getResultsForRun(runId, false);
+
+        // Assert
+        assertEquals(1, results.size());
+        assertEquals(0.5, results.get(0).getRelevanceScore());
+        assertEquals("2026-02-13T10:00:00Z", results.get(0).getScoredAt());
+        assertEquals("baseline", results.get(0).getScoreVersion());
+    }
+
     private ResultItem createResultItem(int id, String runId, boolean isDuplicate, boolean isHidden) {
         return createResultItem(id, runId, isDuplicate, isHidden, null);
     }
@@ -224,7 +270,8 @@ class ResultServiceTest {
             "Test Job " + id, "Test snippet", "https://example.com/job/" + id,
             "https://example.com/job/" + id, "2026-02-13T10:00:00Z",
             null, null, null, null, null, "hash" + id,
-            canonicalId, isDuplicate, isHidden, isDuplicate ? 0 : 1
+            canonicalId, isDuplicate, isHidden, isDuplicate ? 0 : 1,
+            isDuplicate ? null : 0.0, isDuplicate ? null : "2026-02-13T10:00:00Z", isDuplicate ? null : "baseline"
         );
     }
 }

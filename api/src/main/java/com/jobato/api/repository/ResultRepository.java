@@ -24,7 +24,8 @@ public class ResultRepository {
             SELECT id, run_id, query_id, query_text, search_query, domain, title, snippet,
                    raw_url, final_url, created_at, raw_html_path, visible_text,
                    cache_key, cached_at, last_seen_at, normalized_url,
-                   canonical_id, is_duplicate, is_hidden, duplicate_count
+                   canonical_id, is_duplicate, is_hidden, duplicate_count,
+                   relevance_score, scored_at, score_version
             FROM run_items
             WHERE run_id = ?
             """);
@@ -54,7 +55,8 @@ public class ResultRepository {
             SELECT id, run_id, query_id, query_text, search_query, domain, title, snippet,
                    raw_url, final_url, created_at, raw_html_path, visible_text,
                    cache_key, cached_at, last_seen_at, normalized_url,
-                   canonical_id, is_duplicate, is_hidden, duplicate_count
+                   canonical_id, is_duplicate, is_hidden, duplicate_count,
+                   relevance_score, scored_at, score_version
             FROM run_items
             WHERE id = ?
             """;
@@ -76,7 +78,8 @@ public class ResultRepository {
             SELECT id, run_id, query_id, query_text, search_query, domain, title, snippet,
                    raw_url, final_url, created_at, raw_html_path, visible_text,
                    cache_key, cached_at, last_seen_at, normalized_url,
-                   canonical_id, is_duplicate, is_hidden, duplicate_count
+                   canonical_id, is_duplicate, is_hidden, duplicate_count,
+                   relevance_score, scored_at, score_version
             FROM run_items
             WHERE run_id = ? AND query_id = ?
             """);
@@ -165,20 +168,27 @@ public class ResultRepository {
         String normalizedUrl = resultSet.getString("normalized_url");
         
         // Dedupe fields - handle nulls
-        Integer canonicalId = resultSet.getObject("canonical_id") != null ? 
+        Integer canonicalId = resultSet.getObject("canonical_id") != null ?
             resultSet.getInt("canonical_id") : null;
-        Boolean isDuplicate = resultSet.getObject("is_duplicate") != null ? 
+        Boolean isDuplicate = resultSet.getObject("is_duplicate") != null ?
             resultSet.getInt("is_duplicate") == 1 : false;
-        Boolean isHidden = resultSet.getObject("is_hidden") != null ? 
+        Boolean isHidden = resultSet.getObject("is_hidden") != null ?
             resultSet.getInt("is_hidden") == 1 : false;
-        Integer duplicateCount = resultSet.getObject("duplicate_count") != null ? 
+        Integer duplicateCount = resultSet.getObject("duplicate_count") != null ?
             resultSet.getInt("duplicate_count") : 0;
+
+        // Scoring fields - handle nulls
+        Double relevanceScore = resultSet.getObject("relevance_score") != null ?
+            resultSet.getDouble("relevance_score") : null;
+        String scoredAt = resultSet.getString("scored_at");
+        String scoreVersion = resultSet.getString("score_version");
 
         return new ResultItem(
             id, runId, queryId, queryText, searchQuery, domain, title, snippet,
             rawUrl, finalUrl, createdAt, rawHtmlPath, visibleText,
             cacheKey, cachedAt, lastSeenAt, normalizedUrl,
-            canonicalId, isDuplicate, isHidden, duplicateCount
+            canonicalId, isDuplicate, isHidden, duplicateCount,
+            relevanceScore, scoredAt, scoreVersion
         );
     }
 }
