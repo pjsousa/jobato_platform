@@ -34,6 +34,27 @@ class EvaluationResultRow:
     created_at: str
 
 
+@dataclass(frozen=True)
+class ActiveModelRow:
+    model_id: str
+    model_version: str
+    activated_at: str
+    activated_by: str
+    evaluation_id: str | None
+
+
+@dataclass(frozen=True)
+class ModelActivationHistoryRow:
+    model_id: str
+    model_version: str
+    action: str
+    timestamp: str
+    previous_model_id: str | None
+    previous_model_version: str | None
+    reason: str | None
+    evaluation_id: str | None
+
+
 class EvaluationStore:
     def __init__(self, db_path: Path) -> None:
         self._db_path = db_path
@@ -188,6 +209,197 @@ class EvaluationStore:
             for row in rows
         ]
 
+    def get_latest_results_per_model(self) -> list[EvaluationResultRow]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT er.evaluation_id,
+                       er.model_id,
+                       er.model_version,
+                       er.dataset_id,
+                       er.status,
+                       er.metrics_json,
+                       er.error,
+                       er.duration_ms,
+                       er.created_at
+                FROM evaluation_results er
+                INNER JOIN (
+                    SELECT model_id, model_version, MAX(created_at) AS max_created_at
+                    FROM evaluation_results
+                    GROUP BY model_id, model_version
+                ) latest
+                    ON latest.model_id = er.model_id
+                   AND latest.model_version = er.model_version
+                   AND latest.max_created_at = er.created_at
+                ORDER BY er.model_id ASC, er.model_version ASC
+                """
+            ).fetchall()
+        return [
+            EvaluationResultRow(
+                evaluation_id=row[0],
+                model_id=row[1],
+                model_version=row[2],
+                dataset_id=row[3],
+                status=row[4],
+                metrics=json.loads(row[5]) if row[5] else {},
+                error=row[6],
+                duration_ms=row[7],
+                created_at=row[8],
+            )
+            for row in rows
+        ]
+
+    def get_latest_result_for_model(self, model_id: str) -> EvaluationResultRow | None:
+        with self._connect() as conn:
+            row = conn.execute(
+                """
+                SELECT evaluation_id, model_id, model_version, dataset_id,
+                       status, metrics_json, error, duration_ms, created_at
+                FROM evaluation_results
+                WHERE model_id = ?
+                ORDER BY created_at DESC
+                LIMIT 1
+                """,
+                (model_id,),
+            ).fetchone()
+        if row is None:
+            return None
+        return EvaluationResultRow(
+            evaluation_id=row[0],
+            model_id=row[1],
+            model_version=row[2],
+            dataset_id=row[3],
+            status=row[4],
+            metrics=json.loads(row[5]) if row[5] else {},
+            error=row[6],
+            duration_ms=row[7],
+            created_at=row[8],
+        )
+
+    def get_active_model(self) -> ActiveModelRow | None:
+        with self._connect() as conn:
+            row = conn.execute(
+                """
+                SELECT model_id, model_version, activated_at, activated_by, evaluation_id
+                FROM active_models
+                WHERE is_active = 1
+                ORDER BY activated_at DESC
+                LIMIT 1
+                """
+            ).fetchone()
+        if row is None:
+            return None
+        return ActiveModelRow(
+            model_id=row[0],
+            model_version=row[1],
+            activated_at=row[2],
+            activated_by=row[3],
+            evaluation_id=row[4],
+        )
+
+    def activate_model(
+        self,
+        *,
+        model_id: str,
+        model_version: str,
+        activated_by: str,
+        action: str,
+        reason: str | None = None,
+        evaluation_id: str | None = None,
+    ) -> ActiveModelRow:
+        timestamp = _timestamp_now()
+        with self._lock:
+            with self._connect() as conn:
+                previous = conn.execute(
+                    """
+                    SELECT model_id, model_version
+                    FROM active_models
+                    WHERE is_active = 1
+                    ORDER BY activated_at DESC
+                    LIMIT 1
+                    """
+                ).fetchone()
+
+                conn.execute("UPDATE active_models SET is_active = 0 WHERE is_active = 1")
+                conn.execute(
+                    """
+                    INSERT INTO active_models (
+                        model_id,
+                        model_version,
+                        activated_at,
+                        activated_by,
+                        evaluation_id,
+                        is_active
+                    ) VALUES (?, ?, ?, ?, ?, 1)
+                    """,
+                    (model_id, model_version, timestamp, activated_by, evaluation_id),
+                )
+                conn.execute(
+                    """
+                    INSERT INTO model_activation_history (
+                        model_id,
+                        model_version,
+                        action,
+                        timestamp,
+                        previous_model_id,
+                        previous_model_version,
+                        reason,
+                        evaluation_id
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        model_id,
+                        model_version,
+                        action,
+                        timestamp,
+                        previous[0] if previous else None,
+                        previous[1] if previous else None,
+                        reason,
+                        evaluation_id,
+                    ),
+                )
+                conn.commit()
+
+        return ActiveModelRow(
+            model_id=model_id,
+            model_version=model_version,
+            activated_at=timestamp,
+            activated_by=activated_by,
+            evaluation_id=evaluation_id,
+        )
+
+    def get_activation_history(self, limit: int = 50) -> list[ModelActivationHistoryRow]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT model_id,
+                       model_version,
+                       action,
+                       timestamp,
+                       previous_model_id,
+                       previous_model_version,
+                       reason,
+                       evaluation_id
+                FROM model_activation_history
+                ORDER BY timestamp DESC
+                LIMIT ?
+                """,
+                (limit,),
+            ).fetchall()
+        return [
+            ModelActivationHistoryRow(
+                model_id=row[0],
+                model_version=row[1],
+                action=row[2],
+                timestamp=row[3],
+                previous_model_id=row[4],
+                previous_model_version=row[5],
+                reason=row[6],
+                evaluation_id=row[7],
+            )
+            for row in rows
+        ]
+
     def _ensure_schema(self) -> None:
         with self._lock:
             with self._connect() as conn:
@@ -227,6 +439,46 @@ class EvaluationStore:
                     """
                     CREATE INDEX IF NOT EXISTS idx_evaluation_results__evaluation_id
                     ON evaluation_results(evaluation_id)
+                    """
+                )
+                conn.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS active_models (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        model_id TEXT NOT NULL,
+                        model_version TEXT NOT NULL,
+                        activated_at TEXT NOT NULL,
+                        activated_by TEXT NOT NULL,
+                        evaluation_id TEXT,
+                        is_active INTEGER NOT NULL DEFAULT 0
+                    )
+                    """
+                )
+                conn.execute(
+                    """
+                    CREATE INDEX IF NOT EXISTS idx_active_models__is_active
+                    ON active_models(is_active)
+                    """
+                )
+                conn.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS model_activation_history (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        model_id TEXT NOT NULL,
+                        model_version TEXT NOT NULL,
+                        action TEXT NOT NULL,
+                        timestamp TEXT NOT NULL,
+                        previous_model_id TEXT,
+                        previous_model_version TEXT,
+                        reason TEXT,
+                        evaluation_id TEXT
+                    )
+                    """
+                )
+                conn.execute(
+                    """
+                    CREATE INDEX IF NOT EXISTS idx_model_activation_history__timestamp
+                    ON model_activation_history(timestamp)
                     """
                 )
                 conn.commit()

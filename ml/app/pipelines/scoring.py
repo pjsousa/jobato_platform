@@ -3,14 +3,17 @@
 from __future__ import annotations
 
 import logging
+import os
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from sqlalchemy import select
 
 from app.db.models import RunResult
 from app.registry import get_registry
+from app.services.evaluation_store import EvaluationStore
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
@@ -31,11 +34,18 @@ class ScoringOutcome:
     skipped_count: int  # Duplicates inherit scores, not scored directly
 
 
+@dataclass(frozen=True)
+class ActiveModelReference:
+    model_id: str
+    model_version: str
+
+
 def score_run_results(
     session: Session,
     run_id: str,
     score_version: str | None = None,
     model_identifier: str | None = None,
+    active_model: ActiveModelReference | None = None,
     now: datetime | None = None,
 ) -> ScoringOutcome:
     """Assign relevance scores to all non-duplicate results for a run.
@@ -72,17 +82,28 @@ def score_run_results(
 
     selected_model = None
     resolved_version = score_version or DEFAULT_SCORE_VERSION
-    if model_identifier:
+    resolved_model_identifier = model_identifier
+    resolved_from_active = False
+    if resolved_model_identifier is None and score_version is None:
+        resolved_active_model = active_model or _load_active_model_reference()
+        if resolved_active_model is not None:
+            resolved_model_identifier = resolved_active_model.model_id
+            resolved_version = resolved_active_model.model_version
+            resolved_from_active = True
+
+    if resolved_model_identifier:
         registry = get_registry()
         if registry.is_initialized:
-            selected_model = registry.get_model(model_identifier)
+            selected_model = registry.get_model(resolved_model_identifier)
             if selected_model is None:
                 logger.warning(
                     "scoring.model_not_found model=%s fallback=%s",
-                    model_identifier,
+                    resolved_model_identifier,
                     DEFAULT_SCORE_VERSION,
                 )
-            elif score_version is None:
+                if score_version is None:
+                    resolved_version = DEFAULT_SCORE_VERSION
+            elif score_version is None and not resolved_from_active:
                 resolved_version = selected_model.version
 
     predictions: list[float] | None = None
@@ -102,7 +123,7 @@ def score_run_results(
         except Exception as exc:
             logger.warning(
                 "scoring.model_failed model=%s error=%s fallback=%s",
-                model_identifier,
+                resolved_model_identifier,
                 exc,
                 DEFAULT_SCORE_VERSION,
             )
@@ -182,3 +203,15 @@ def _format_timestamp(value: datetime) -> str:
     """Format datetime as ISO 8601 UTC string."""
     normalized = value.astimezone(timezone.utc).replace(microsecond=0)
     return normalized.isoformat().replace("+00:00", "Z")
+
+
+def _load_active_model_reference() -> ActiveModelReference | None:
+    data_dir = Path(os.getenv("DATA_DIR", "data"))
+    db_path = data_dir / "db" / "evaluations.db"
+    if not db_path.exists():
+        return None
+    store = EvaluationStore(db_path)
+    active = store.get_active_model()
+    if active is None:
+        return None
+    return ActiveModelReference(model_id=active.model_id, model_version=active.model_version)
