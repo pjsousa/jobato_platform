@@ -34,3 +34,4 @@ class ResultMetadata:
     cache_expires_at: str | None = None
     last_seen_at: str | None = None
     skip_reason: str | None = None
+    normalized_url: str | None = None
