@@ -46,6 +46,10 @@ class ResultRepository:
             last_seen_at=result.last_seen_at,
             skip_reason=result.skip_reason,
             normalized_url=result.normalized_url,
+            canonical_id=result.canonical_id,
+            is_duplicate=result.is_duplicate,
+            is_hidden=result.is_hidden,
+            duplicate_count=result.duplicate_count,
         )
 
 

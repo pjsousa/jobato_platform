@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from sqlalchemy import Index, Integer, String, Text
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy import ForeignKey, Index, Integer, String, Text
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 class Base(DeclarativeBase):
@@ -10,7 +10,13 @@ class Base(DeclarativeBase):
 
 class RunResult(Base):
     __tablename__ = "run_items"
-    __table_args__ = (Index("idx_run_items__run_id", "run_id"),)
+    __table_args__ = (
+        Index("idx_run_items__run_id", "run_id"),
+        Index("idx_run_items__normalized_url", "normalized_url"),
+        Index("idx_run_items__canonical_id", "canonical_id"),
+        Index("idx_run_items__is_duplicate", "is_duplicate"),
+        Index("idx_run_items__is_hidden", "is_hidden"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     run_id: Mapped[str] = mapped_column(String, nullable=False)
@@ -34,3 +40,10 @@ class RunResult(Base):
     last_seen_at: Mapped[str | None] = mapped_column(String, nullable=True)
     skip_reason: Mapped[str | None] = mapped_column(String, nullable=True)
     normalized_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    # Dedupe fields
+    # Note: Foreign key constraint is not enforced at DB level for SQLite compatibility
+    # The relationship is maintained at the application level
+    canonical_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    is_duplicate: Mapped[bool] = mapped_column(Integer, default=False)
+    is_hidden: Mapped[bool] = mapped_column(Integer, default=False)
+    duplicate_count: Mapped[int] = mapped_column(Integer, default=0)

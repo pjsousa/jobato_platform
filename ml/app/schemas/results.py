@@ -35,3 +35,8 @@ class ResultMetadata:
     last_seen_at: str | None = None
     skip_reason: str | None = None
     normalized_url: str | None = None
+    # Dedupe fields
+    canonical_id: int | None = None
+    is_duplicate: bool = False
+    is_hidden: bool = False
+    duplicate_count: int = 0

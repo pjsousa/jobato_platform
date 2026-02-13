@@ -16,6 +16,7 @@ from app.services.cache import CachePolicy, CacheService, load_cache_policy
 from app.services.html_fetcher import HtmlFetcher
 from app.services.html_extractor import HtmlExtractor
 from app.services.url_normalizer import normalize_url
+from app.pipelines.dedupe import dedupe_run_results, DedupeOutcome
 
 
 @dataclass(frozen=True)
@@ -48,6 +49,7 @@ class IngestionOutcome:
     skipped_404: int
     new_jobs_count: int
     zero_results: list["ZeroResultObservation"]
+    dedupe_outcome: DedupeOutcome | None = None
 
 
 @dataclass(frozen=True)
@@ -123,6 +125,7 @@ def ingest_run(
     capture_html: bool = False,
     cache_policy: CachePolicy | None = None,
     cache_service: CacheService | None = None,
+    dedupe_enabled: bool = True,
 ) -> IngestionOutcome:
     writer = result_writer
     session = None
@@ -310,14 +313,24 @@ def ingest_run(
                 run_input.domain,
             )
 
+    dedupe_outcome = None
     try:
         persisted = writer.write_all(pending_results)
+        
+        # Run deduplication if enabled and we have a session
+        if dedupe_enabled and session is not None and persisted > 0:
+            try:
+                dedupe_outcome = dedupe_run_results(session, run_id)
+            except Exception as e:
+                logger.warning("dedupe.failed run_id=%s error=%s", run_id, e)
+        
         return IngestionOutcome(
             issued_calls=issued_calls,
             persisted_results=persisted,
             skipped_404=skipped_404,
             new_jobs_count=new_jobs_count,
             zero_results=zero_results,
+            dedupe_outcome=dedupe_outcome,
         )
     finally:
         if session is not None:
