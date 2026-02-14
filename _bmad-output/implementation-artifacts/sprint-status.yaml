@@ -66,12 +66,12 @@ development_status:
   3-7-daily-retrain-for-the-active-model: ready-for-dev
   epic-3-retrospective: optional
 
-  epic-4: backlog
-  4-1-today-and-all-time-results-views: backlog
-  4-2-two-pane-results-layout-with-selection: backlog
-  4-3-key-fields-and-duplicate-count-display: backlog
-  4-4-mark-job-as-irrelevant-and-clear-label: backlog
-  4-5-toggle-irrelevant-visibility: backlog
-  4-6-sort-by-first-seen-time: backlog
-  4-7-accessibility-and-keyboard-interaction: backlog
+  epic-4: in-progress
+  4-1-today-and-all-time-results-views: ready-for-dev
+  4-2-two-pane-results-layout-with-selection: ready-for-dev
+  4-3-key-fields-and-duplicate-count-display: ready-for-dev
+  4-4-mark-job-as-irrelevant-and-clear-label: ready-for-dev
+  4-5-toggle-irrelevant-visibility: ready-for-dev
+  4-6-sort-by-first-seen-time: ready-for-dev
+  4-7-accessibility-and-keyboard-interaction: ready-for-dev
   epic-4-retrospective: optional
