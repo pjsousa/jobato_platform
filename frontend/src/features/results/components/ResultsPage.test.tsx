@@ -315,6 +315,38 @@ describe('ResultsPage', () => {
     expect(renderedTitles).toEqual(['First from API', 'Second from API', 'Third from API'])
   })
 
+  it('keeps selected id stable across refetch when still visible', async () => {
+    let todayResults = [
+      createResult(1, 'First from API', 'run-today'),
+      createResult(2, 'Selected stays', 'run-today'),
+      createResult(3, 'Third from API', 'run-today'),
+    ]
+
+    mockUseResults.mockImplementation(() => ({
+      data: todayResults,
+      isLoading: false,
+      isFetching: false,
+      error: null,
+    }))
+
+    const user = userEvent.setup()
+    const { rerender, router } = renderPage('/results?view=today')
+
+    await user.click(screen.getByRole('button', { name: /selected stays/i }))
+    expect(screen.getByRole('heading', { level: 3, name: 'Selected stays' })).toBeInTheDocument()
+
+    todayResults = [
+      createResult(3, 'Third from API', 'run-today'),
+      createResult(2, 'Selected stays', 'run-today'),
+      createResult(1, 'First from API', 'run-today'),
+    ]
+
+    rerender(<RouterProvider router={router} />)
+
+    expect(screen.getByRole('heading', { level: 3, name: 'Selected stays' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /selected stays/i })).toHaveClass('selected')
+  })
+
   it('renders required list metadata and only shows duplicate badge for positive counts', () => {
     const todayResults = [
       createResult(1, 'Canonical result', 'run-today', {

@@ -57,6 +57,21 @@ class ResultServiceTest {
     }
 
     @Test
+    void getResults_allTimeKeepsRepositoryOrderUnchanged() {
+        List<ResultItem> ordered = Arrays.asList(
+            createResultItem(20, "run-new", false, false),
+            createResultItem(15, "run-new", false, false),
+            createResultItem(16, "run-old", false, false)
+        );
+        when(resultRepository.findAll(false)).thenReturn(ordered);
+
+        List<ResultItem> returned = resultService.getResults(null, "all-time", false);
+
+        assertEquals(List.of(20, 15, 16), returned.stream().map(ResultItem::getId).toList());
+        verify(resultRepository).findAll(false);
+    }
+
+    @Test
     void getResults_returnsTodayFromLatestRunSummary() {
         RunSummary latest = new RunSummary(
             "run-latest",
@@ -198,6 +213,22 @@ class ResultServiceTest {
 
         // Assert
         assertEquals(1, returned.size());
+        verify(resultRepository).findByRunIdAndQueryId(runId, queryId, false);
+    }
+
+    @Test
+    void getResultsForRunAndQuery_keepsRepositoryOrdering() {
+        String runId = "test-run";
+        String queryId = "q1";
+        List<ResultItem> ordered = Arrays.asList(
+            createResultItem(7, runId, false, false),
+            createResultItem(5, runId, false, false)
+        );
+        when(resultRepository.findByRunIdAndQueryId(runId, queryId, false)).thenReturn(ordered);
+
+        List<ResultItem> returned = resultService.getResultsForRunAndQuery(runId, queryId, false);
+
+        assertEquals(List.of(7, 5), returned.stream().map(ResultItem::getId).toList());
         verify(resultRepository).findByRunIdAndQueryId(runId, queryId, false);
     }
 

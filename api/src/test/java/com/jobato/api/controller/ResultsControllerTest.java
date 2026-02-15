@@ -176,6 +176,39 @@ class ResultsControllerTest {
     }
 
     @Test
+    void getResultsByQuery_includesHiddenWhenRequestedAndPreservesOrder() {
+        String runId = "test-run-1";
+        String queryId = "q1";
+        ResultItem first = new ResultItem(
+            9, runId, queryId, "query one", "site:example.com query one", "example.com",
+            "Newest", "Newest snippet", "https://example.com/job/9", "https://example.com/job/9",
+            "2026-02-14T10:00:00Z", null, null, "cache-9", null, "2026-02-15T11:00:00Z", "https://example.com/job/9",
+            null, false, false, 0,
+            0.9, "2026-02-14T10:00:00Z", "baseline"
+        );
+        ResultItem second = new ResultItem(
+            8, runId, queryId, "query one", "site:example.com query one", "example.com",
+            "Hidden duplicate", "Hidden snippet", "https://example.com/job/8", "https://example.com/job/8",
+            "2026-02-14T09:00:00Z", null, null, "cache-8", null, "2026-02-15T11:00:00Z", "https://example.com/job/8",
+            9, true, true, 0,
+            null, null, null
+        );
+        when(resultService.getResultsForRunAndQuery(runId, queryId, true)).thenReturn(Arrays.asList(first, second));
+
+        ResponseEntity<List<Map<String, Object>>> response =
+            resultsController.getResultsByQuery(runId, queryId, true);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(List.of(9, 8), response.getBody().stream().map(item -> (Integer) item.get("id")).toList());
+        assertEquals("2026-02-14T10:00:00Z", response.getBody().get(0).get("createdAt"));
+        assertEquals("2026-02-15T11:00:00Z", response.getBody().get(0).get("lastSeenAt"));
+        assertFalse(response.getBody().get(0).containsKey("created_at"));
+        assertFalse(response.getBody().get(0).containsKey("last_seen_at"));
+        verify(resultService).getResultsForRunAndQuery(runId, queryId, true);
+    }
+
+    @Test
     void getResultCounts_returnsCorrectCounts() {
         // Arrange
         String runId = "test-run-1";
