@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
-import { ApiError, type ResultRecord, type ResultsView } from '../api/results-api'
+import { ApiError, type ResultDisplayRecord, type ResultsView } from '../api/results-api'
 import { useResults } from '../hooks/use-results'
 import { ResultDetail } from './ResultDetail'
 import { ResultsList } from './ResultsList'
@@ -33,7 +33,7 @@ export const ResultsPage = () => {
   }, [searchParams, setSearchParams, view])
 
   const { data, isLoading, isFetching, error } = useResults(view)
-  const results: ResultRecord[] = data ?? []
+  const results: ResultDisplayRecord[] = data ?? []
   const [selectedId, setSelectedId] = useState<number | null>(null)
 
   useEffect(() => {

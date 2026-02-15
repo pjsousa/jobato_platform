@@ -27,6 +27,15 @@ export type ResultRecord = {
   scoreVersion: string | null
 }
 
+export type ResultDisplayRecord = Omit<ResultRecord, 'title' | 'snippet'> & {
+  title: string
+  company: string
+  snippet: string
+  source: string
+  postedDate: string
+  sourceUrl: string | null
+}
+
 type ApiProblem = {
   title?: string
   detail?: string
@@ -45,6 +54,89 @@ export class ApiError extends Error {
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api').replace(/\/$/, '')
 const baseUrl = `${API_BASE_URL}/results`
+
+const UNKNOWN_COMPANY = 'Unknown company'
+const UNKNOWN_SOURCE = 'Unknown source'
+const UNKNOWN_POSTED_DATE = 'Unknown date'
+
+const normalizeText = (value: string | null | undefined) => {
+  if (!value) {
+    return ''
+  }
+  return value.trim()
+}
+
+const toTitleCase = (value: string) =>
+  value
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((part) => `${part.slice(0, 1).toUpperCase()}${part.slice(1).toLowerCase()}`)
+    .join(' ')
+
+const normalizeDomain = (domain: string | null) => {
+  const normalized = normalizeText(domain).toLowerCase()
+  return normalized.replace(/^www\./, '')
+}
+
+const resolveCompany = (domain: string | null) => {
+  const normalized = normalizeDomain(domain)
+  if (!normalized) {
+    return UNKNOWN_COMPANY
+  }
+
+  const companyToken = normalized.split('.').find(Boolean)
+  if (!companyToken) {
+    return UNKNOWN_COMPANY
+  }
+
+  return toTitleCase(companyToken)
+}
+
+const resolveSource = (domain: string | null) => {
+  const normalized = normalizeDomain(domain)
+  return normalized || UNKNOWN_SOURCE
+}
+
+const resolvePostedDate = (createdAt: string | null) => {
+  const normalized = normalizeText(createdAt)
+  if (!normalized) {
+    return UNKNOWN_POSTED_DATE
+  }
+
+  const parsed = new Date(normalized)
+  if (Number.isNaN(parsed.getTime())) {
+    return UNKNOWN_POSTED_DATE
+  }
+
+  return parsed.toISOString().slice(0, 10)
+}
+
+const resolveSourceUrl = (finalUrl: string | null, rawUrl: string | null) => {
+  const candidate = normalizeText(finalUrl) || normalizeText(rawUrl)
+  if (!candidate) {
+    return null
+  }
+
+  try {
+    const parsed = new URL(candidate)
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return null
+    }
+    return parsed.toString()
+  } catch {
+    return null
+  }
+}
+
+const toDisplayResult = (result: ResultRecord): ResultDisplayRecord => ({
+  ...result,
+  title: normalizeText(result.title) || '(Untitled result)',
+  company: resolveCompany(result.domain),
+  snippet: normalizeText(result.snippet) || 'No snippet available.',
+  source: resolveSource(result.domain),
+  postedDate: resolvePostedDate(result.createdAt),
+  sourceUrl: resolveSourceUrl(result.finalUrl, result.rawUrl),
+})
 
 const parseProblem = async (response: Response): Promise<ApiProblem | undefined> => {
   try {
@@ -81,5 +173,6 @@ export const getResults = async ({ view = 'today', includeHidden = false, runId 
   }
 
   const response = await fetch(`${baseUrl}?${params.toString()}`)
-  return handleResponse<ResultRecord[]>(response)
+  const records = await handleResponse<ResultRecord[]>(response)
+  return records.map(toDisplayResult)
 }

@@ -1,8 +1,8 @@
-import type { ResultRecord } from '../api/results-api'
+import type { ResultDisplayRecord } from '../api/results-api'
 import './ResultsList.css'
 
 type ResultsListProps = {
-  results: ResultRecord[]
+  results: ResultDisplayRecord[]
   selectedResultId: number | null
   onSelectResult: (id: number) => void
   isLoading: boolean
@@ -34,8 +34,19 @@ export const ResultsList = ({
               className={`results-item${selectedResultId === item.id ? ' selected' : ''}`}
               onClick={() => onSelectResult(item.id)}
             >
-              <span className="results-item__title">{item.title ?? '(Untitled result)'}</span>
-              <span className="results-item__meta">{item.domain ?? 'Unknown domain'}</span>
+              <span className="results-item__title-row">
+                <span className="results-item__title">{item.title}</span>
+                {item.duplicateCount > 0 ? (
+                  <span className="results-item__duplicate-badge">{item.duplicateCount} duplicate(s)</span>
+                ) : null}
+              </span>
+              <span className="results-item__company">{item.company}</span>
+              <span className="results-item__snippet">{item.snippet}</span>
+              <span className="results-item__meta">
+                <span>{item.source}</span>
+                <span aria-hidden="true">•</span>
+                <span>{item.postedDate}</span>
+              </span>
             </button>
           </li>
         ))}

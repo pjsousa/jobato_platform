@@ -15,7 +15,7 @@
   padding: 10px 12px;
   cursor: pointer;
   display: grid;
-  gap: 4px;
+  gap: 6px;
 }
 
 .results-item.selected {
@@ -28,7 +28,42 @@
   color: var(--ink);
 }
 
-.results-item__meta {
+.results-item__title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.results-item__duplicate-badge {
+  font-size: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, white);
+  border-radius: 999px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent-soft) 65%, white);
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+.results-item__company {
+  font-size: 14px;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.results-item__snippet {
   color: var(--muted);
   font-size: 14px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.results-item__meta {
+  color: var(--muted);
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }

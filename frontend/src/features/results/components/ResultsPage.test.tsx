@@ -11,7 +11,12 @@ vi.mock('../hooks/use-results', () => ({
   useResults: (view: 'today' | 'all-time') => mockUseResults(view),
 }))
 
-const createResult = (id: number, title: string, runId: string) => ({
+const createResult = (
+  id: number,
+  title: string,
+  runId: string,
+  overrides: Partial<Record<string, unknown>> = {},
+) => ({
   id,
   runId,
   queryId: 'query-1',
@@ -19,7 +24,11 @@ const createResult = (id: number, title: string, runId: string) => ({
   searchQuery: 'search terms',
   domain: 'example.com',
   title,
+  company: 'Example',
   snippet: `${title} snippet`,
+  source: 'example.com',
+  postedDate: '2026-02-14',
+  sourceUrl: 'https://example.com/final',
   rawUrl: 'https://example.com/raw',
   finalUrl: 'https://example.com/final',
   createdAt: '2026-02-14T10:00:00Z',
@@ -36,6 +45,7 @@ const createResult = (id: number, title: string, runId: string) => ({
   relevanceScore: 0.8,
   scoredAt: '2026-02-14T10:00:00Z',
   scoreVersion: 'baseline',
+  ...overrides,
 })
 
 const renderPage = (initialEntry = '/results') => {
@@ -196,6 +206,79 @@ describe('ResultsPage', () => {
       (node) => node.textContent,
     )
     expect(renderedTitles).toEqual(['First from API', 'Second from API', 'Third from API'])
+  })
+
+  it('renders required list metadata and only shows duplicate badge for positive counts', () => {
+    const todayResults = [
+      createResult(1, 'Canonical result', 'run-today', {
+        company: 'Acme',
+        snippet: 'Canonical snippet',
+        source: 'acme.com',
+        postedDate: '2026-01-10',
+        duplicateCount: 2,
+      }),
+      createResult(2, 'Single result', 'run-today', {
+        company: 'Solo',
+        snippet: 'Single snippet',
+        source: 'solo.io',
+        postedDate: '2026-01-09',
+        duplicateCount: 0,
+      }),
+    ]
+
+    mockUseResults.mockImplementation(() => ({
+      data: todayResults,
+      isLoading: false,
+      isFetching: false,
+      error: null,
+    }))
+
+    renderPage('/results?view=today')
+
+    expect(screen.getAllByText('Acme').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Canonical snippet').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('acme.com').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('2026-01-10').length).toBeGreaterThan(0)
+    expect(screen.getByText('2 duplicate(s)')).toBeInTheDocument()
+    expect(screen.queryByText('0 duplicate(s)')).not.toBeInTheDocument()
+  })
+
+  it('shows canonical context and safe source links in detail pane', async () => {
+    const todayResults = [
+      createResult(1, 'Canonical result', 'run-today', {
+        duplicateCount: 3,
+        isDuplicate: false,
+        canonicalId: null,
+        sourceUrl: 'https://canonical.example.com/post',
+      }),
+      createResult(2, 'Duplicate result', 'run-today', {
+        duplicateCount: 0,
+        isDuplicate: true,
+        canonicalId: 1,
+        sourceUrl: 'https://duplicate.example.com/post',
+      }),
+    ]
+
+    mockUseResults.mockImplementation(() => ({
+      data: todayResults,
+      isLoading: false,
+      isFetching: false,
+      error: null,
+    }))
+
+    const user = userEvent.setup()
+    renderPage('/results?view=today')
+
+    expect(screen.getByText('This is the canonical result for 3 duplicate(s).')).toBeInTheDocument()
+    const canonicalLink = screen.getByRole('link', { name: /open source page/i })
+    expect(canonicalLink).toHaveAttribute('href', 'https://canonical.example.com/post')
+    expect(canonicalLink).toHaveAttribute('target', '_blank')
+    expect(canonicalLink).toHaveAttribute('rel', 'noopener noreferrer')
+
+    await user.click(screen.getByRole('button', { name: /duplicate result/i }))
+    expect(
+      screen.getByText('This result is marked as a duplicate of canonical result #1.'),
+    ).toBeInTheDocument()
   })
 
   it('shows loading, updating, and empty states and clears empty selection', () => {
