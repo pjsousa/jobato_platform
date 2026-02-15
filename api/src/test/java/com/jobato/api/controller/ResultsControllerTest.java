@@ -1,6 +1,8 @@
 package com.jobato.api.controller;
 
 import com.jobato.api.model.ResultItem;
+import com.jobato.api.model.ManualFeedback;
+import com.jobato.api.service.FeedbackService;
 import com.jobato.api.service.ResultService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,12 +20,15 @@ import static org.mockito.Mockito.*;
 class ResultsControllerTest {
 
     private ResultService resultService;
+    private FeedbackService feedbackService;
     private ResultsController resultsController;
 
     @BeforeEach
     void setUp() {
         resultService = mock(ResultService.class);
-        resultsController = new ResultsController(resultService);
+        feedbackService = mock(FeedbackService.class);
+        when(feedbackService.resolveManualFeedback(any(ResultItem.class))).thenReturn(new ManualFeedback(null, null));
+        resultsController = new ResultsController(resultService, feedbackService);
     }
 
     @Test
@@ -44,6 +49,7 @@ class ResultsControllerTest {
         assertNotNull(response.getBody());
         assertEquals(2, response.getBody().size());
         verify(resultService).getResults(runId, "today", false);
+        verify(feedbackService, times(2)).resolveManualFeedback(any(ResultItem.class));
     }
 
     @Test
@@ -64,6 +70,7 @@ class ResultsControllerTest {
         assertNotNull(response.getBody());
         assertEquals(2, response.getBody().size());
         verify(resultService).getResults(runId, "today", true);
+        verify(feedbackService, times(2)).resolveManualFeedback(any(ResultItem.class));
     }
 
     @Test
@@ -90,6 +97,8 @@ class ResultsControllerTest {
         assertEquals(false, resultMap.get("isHidden"));
         assertEquals(2, resultMap.get("duplicateCount"));
         assertNull(resultMap.get("canonicalId"));
+        assertNull(resultMap.get("manualLabel"));
+        assertNull(resultMap.get("manualLabelUpdatedAt"));
     }
 
     @Test
@@ -124,6 +133,7 @@ class ResultsControllerTest {
         assertEquals(true, resultMap.get("isDuplicate"));
         assertEquals(true, resultMap.get("isHidden"));
         assertNotNull(resultMap.get("canonicalRecord"));
+        assertNull(resultMap.get("manualLabel"));
         
         @SuppressWarnings("unchecked")
         Map<String, Object> canonicalRecord = (Map<String, Object>) resultMap.get("canonicalRecord");
@@ -206,6 +216,7 @@ class ResultsControllerTest {
         assertEquals(0.75, resultMap.get("relevanceScore"));
         assertEquals("2026-02-13T10:00:00Z", resultMap.get("scoredAt"));
         assertEquals("baseline", resultMap.get("scoreVersion"));
+        assertNull(resultMap.get("manualLabel"));
     }
 
     @Test
@@ -230,6 +241,23 @@ class ResultsControllerTest {
         assertNull(resultMap.get("relevanceScore"));
         assertNull(resultMap.get("scoredAt"));
         assertNull(resultMap.get("scoreVersion"));
+        assertNull(resultMap.get("manualLabel"));
+    }
+
+    @Test
+    void getResults_returnsManualLabelFieldsWhenHydrated() {
+        String runId = "test-run-1";
+        ResultItem result = createResultItem(1, runId, false);
+        when(resultService.getResults(runId, "today", false)).thenReturn(List.of(result));
+        when(feedbackService.resolveManualFeedback(result))
+            .thenReturn(new ManualFeedback("relevant", "2026-02-15T12:00:00Z"));
+
+        ResponseEntity<List<Map<String, Object>>> response = resultsController.getResults(runId, "today", false);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        Map<String, Object> resultMap = response.getBody().get(0);
+        assertEquals("relevant", resultMap.get("manualLabel"));
+        assertEquals("2026-02-15T12:00:00Z", resultMap.get("manualLabelUpdatedAt"));
     }
 
     @Test

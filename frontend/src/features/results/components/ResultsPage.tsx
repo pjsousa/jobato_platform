@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
-import { ApiError, type ResultDisplayRecord, type ResultsView } from '../api/results-api'
+import { getFeedbackErrorMessage, useFeedback } from '../../feedback'
+import { ApiError, type ManualLabel, type ResultDisplayRecord, type ResultsView } from '../api/results-api'
 import { useResults } from '../hooks/use-results'
 import { ResultDetail } from './ResultDetail'
 import { ResultsList } from './ResultsList'
@@ -20,6 +21,16 @@ const getErrorMessage = (error: unknown) => {
   return 'Unable to load results right now.'
 }
 
+const getNextManualLabel = (label: ManualLabel): ManualLabel => {
+  if (label === null) {
+    return 'relevant'
+  }
+  if (label === 'relevant') {
+    return 'irrelevant'
+  }
+  return null
+}
+
 export const ResultsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const view = resolveView(searchParams.get('view'))
@@ -33,6 +44,7 @@ export const ResultsPage = () => {
   }, [searchParams, setSearchParams, view])
 
   const { data, isLoading, isFetching, error } = useResults(view)
+  const feedbackMutation = useFeedback()
   const results: ResultDisplayRecord[] = data ?? []
   const [selectedId, setSelectedId] = useState<number | null>(null)
 
@@ -73,6 +85,18 @@ export const ResultsPage = () => {
     const nextParams = new URLSearchParams(searchParams)
     nextParams.set('view', nextView)
     setSearchParams(nextParams)
+  }
+
+  const handleCycleManualLabel = () => {
+    if (!selectedItem || feedbackMutation.isPending) {
+      return
+    }
+
+    const nextLabel = getNextManualLabel(selectedItem.manualLabel)
+    feedbackMutation.mutate({
+      resultId: selectedItem.id,
+      label: nextLabel,
+    })
   }
 
   return (
@@ -117,7 +141,14 @@ export const ResultsPage = () => {
           errorMessage={error && !showInitialLoading ? getErrorMessage(error) : null}
           emptyStateMessage={emptyStateMessage}
         />
-        <ResultDetail selectedResult={selectedItem} isLoading={showInitialLoading} isEmpty={isEmpty} />
+        <ResultDetail
+          selectedResult={selectedItem}
+          isLoading={showInitialLoading}
+          isEmpty={isEmpty}
+          onCycleManualLabel={handleCycleManualLabel}
+          isFeedbackPending={feedbackMutation.isPending}
+          feedbackErrorMessage={feedbackMutation.isError ? getFeedbackErrorMessage(feedbackMutation.error) : null}
+        />
       </section>
     </div>
   )

@@ -1,6 +1,8 @@
 package com.jobato.api.controller;
 
 import com.jobato.api.model.ResultItem;
+import com.jobato.api.model.ManualFeedback;
+import com.jobato.api.service.FeedbackService;
 import com.jobato.api.service.ResultService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,9 +17,11 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/results")
 public class ResultsController {
     private final ResultService resultService;
+    private final FeedbackService feedbackService;
 
-    public ResultsController(ResultService resultService) {
+    public ResultsController(ResultService resultService, FeedbackService feedbackService) {
         this.resultService = resultService;
+        this.feedbackService = feedbackService;
     }
 
     /**
@@ -133,6 +137,9 @@ public class ResultsController {
         response.put("relevanceScore", result.getRelevanceScore());
         response.put("scoredAt", result.getScoredAt());
         response.put("scoreVersion", result.getScoreVersion());
+        ManualFeedback feedback = feedbackService.resolveManualFeedback(result);
+        response.put("manualLabel", feedback.getManualLabel());
+        response.put("manualLabelUpdatedAt", feedback.getManualLabelUpdatedAt());
         return response;
     }
 

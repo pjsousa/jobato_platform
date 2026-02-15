@@ -8,6 +8,27 @@
   margin: 0;
 }
 
+.result-details__title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.result-details__title-button {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+}
+
+.result-details__title-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
 .result-details p {
   margin: 0;
 }

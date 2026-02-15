@@ -1,4 +1,5 @@
 export type ResultsView = 'today' | 'all-time'
+export type ManualLabel = 'relevant' | 'irrelevant' | null
 
 export type ResultRecord = {
   id: number
@@ -25,6 +26,8 @@ export type ResultRecord = {
   relevanceScore: number | null
   scoredAt: string | null
   scoreVersion: string | null
+  manualLabel: ManualLabel
+  manualLabelUpdatedAt: string | null
 }
 
 export type ResultDisplayRecord = Omit<ResultRecord, 'title' | 'snippet'> & {

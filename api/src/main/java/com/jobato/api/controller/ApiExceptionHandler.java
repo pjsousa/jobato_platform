@@ -2,6 +2,8 @@ package com.jobato.api.controller;
 
 import com.jobato.api.service.QueryNotFoundException;
 import com.jobato.api.service.QueryValidationException;
+import com.jobato.api.service.FeedbackNotFoundException;
+import com.jobato.api.service.FeedbackValidationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +29,22 @@ public class ApiExceptionHandler {
         detail.setTitle("Not found");
         detail.setType(URI.create("https://jobato/errors/not-found"));
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(detail);
+    }
+
+    @ExceptionHandler(FeedbackNotFoundException.class)
+    public ResponseEntity<ProblemDetail> handleFeedbackNotFound(FeedbackNotFoundException exception) {
+        ProblemDetail detail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
+        detail.setTitle("Not found");
+        detail.setType(URI.create("https://jobato/errors/not-found"));
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(detail);
+    }
+
+    @ExceptionHandler(FeedbackValidationException.class)
+    public ResponseEntity<ProblemDetail> handleFeedbackValidation(FeedbackValidationException exception) {
+        ProblemDetail detail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
+        detail.setTitle("Validation error");
+        detail.setType(URI.create("https://jobato/errors/validation"));
+        return ResponseEntity.badRequest().body(detail);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

@@ -5,9 +5,29 @@ type ResultDetailProps = {
   selectedResult: ResultDisplayRecord | null
   isLoading: boolean
   isEmpty: boolean
+  onCycleManualLabel: () => void
+  isFeedbackPending: boolean
+  feedbackErrorMessage: string | null
 }
 
-export const ResultDetail = ({ selectedResult, isLoading, isEmpty }: ResultDetailProps) => (
+const getManualLabelDisplay = (label: ResultDisplayRecord['manualLabel']) => {
+  if (label === 'relevant') {
+    return { text: 'Relevant', className: 'relevant' }
+  }
+  if (label === 'irrelevant') {
+    return { text: 'Irrelevant', className: 'irrelevant' }
+  }
+  return null
+}
+
+export const ResultDetail = ({
+  selectedResult,
+  isLoading,
+  isEmpty,
+  onCycleManualLabel,
+  isFeedbackPending,
+  feedbackErrorMessage,
+}: ResultDetailProps) => (
   <article className="card">
     <h2>Details</h2>
     {isLoading ? <p className="results-state">Loading result details...</p> : null}
@@ -15,7 +35,10 @@ export const ResultDetail = ({ selectedResult, isLoading, isEmpty }: ResultDetai
     {!isLoading && !isEmpty && !selectedResult ? (
       <p className="results-state">Select a result to inspect details.</p>
     ) : null}
-    {selectedResult ? <ResultDetails item={selectedResult} /> : null}
+    {feedbackErrorMessage ? <p className="results-error">{feedbackErrorMessage} Please try again.</p> : null}
+    {selectedResult ? (
+      <ResultDetails item={selectedResult} onCycleManualLabel={onCycleManualLabel} isFeedbackPending={isFeedbackPending} />
+    ) : null}
   </article>
 )
 
@@ -34,12 +57,34 @@ const getCanonicalContext = (item: ResultDisplayRecord) => {
   return 'This result is currently the canonical record with no linked duplicates.'
 }
 
-const ResultDetails = ({ item }: { item: ResultDisplayRecord }) => (
-  <div className="result-details">
-    <h3>{item.title}</h3>
-    <p>{item.snippet}</p>
-    <p className="result-details__canonical-context">{getCanonicalContext(item)}</p>
-    <dl>
+const ResultDetails = ({
+  item,
+  onCycleManualLabel,
+  isFeedbackPending,
+}: {
+  item: ResultDisplayRecord
+  onCycleManualLabel: () => void
+  isFeedbackPending: boolean
+}) => {
+  const manualLabel = getManualLabelDisplay(item.manualLabel)
+
+  return (
+    <div className="result-details">
+      <div className="result-details__title-row">
+        <button
+          type="button"
+          className="result-details__title-button"
+          onClick={onCycleManualLabel}
+          disabled={isFeedbackPending}
+          aria-label="Cycle manual feedback label"
+        >
+          <h3>{item.title}</h3>
+        </button>
+        {manualLabel ? <span className={`manual-label-pill manual-label-pill--${manualLabel.className}`}>{manualLabel.text}</span> : null}
+      </div>
+      <p>{item.snippet}</p>
+      <p className="result-details__canonical-context">{getCanonicalContext(item)}</p>
+      <dl>
       <div>
         <dt>Company</dt>
         <dd>{item.company}</dd>
@@ -76,6 +121,7 @@ const ResultDetails = ({ item }: { item: ResultDisplayRecord }) => (
           )}
         </dd>
       </div>
-    </dl>
-  </div>
-)
+      </dl>
+    </div>
+  )
+}

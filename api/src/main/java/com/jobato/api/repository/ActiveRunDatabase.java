@@ -48,6 +48,13 @@ public class ActiveRunDatabase {
           UNIQUE(run_id, query_text, domain)
         )
         """;
+    private static final String CREATE_MANUAL_FEEDBACK_TABLE = """
+        CREATE TABLE IF NOT EXISTS manual_feedback (
+          identity_key TEXT PRIMARY KEY,
+          manual_label TEXT,
+          manual_label_updated_at TEXT NOT NULL
+        )
+        """;
     private static final String STATUS_REASON_COLUMN = "status_reason";
     private static final String ADD_STATUS_REASON_COLUMN = "ALTER TABLE runs ADD COLUMN status_reason TEXT";
     private static final String CREATE_STATUS_INDEX =
@@ -117,6 +124,7 @@ public class ActiveRunDatabase {
                 statement.execute(CREATE_RUNS_TABLE);
                 statement.execute(CREATE_RUN_SUMMARIES_TABLE);
                 statement.execute(CREATE_ZERO_RESULT_LOGS_TABLE);
+                statement.execute(CREATE_MANUAL_FEEDBACK_TABLE);
                 statement.execute(CREATE_STATUS_INDEX);
                 statement.execute(CREATE_ZERO_RESULT_LOGS_RUN_ID_INDEX);
                 if (!columnExists(connection, "runs", STATUS_REASON_COLUMN)) {

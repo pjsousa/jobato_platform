@@ -6,9 +6,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ResultsPage } from './ResultsPage'
 
 const mockUseResults = vi.fn()
+const mockUseFeedback = vi.fn()
 
 vi.mock('../hooks/use-results', () => ({
   useResults: (view: 'today' | 'all-time') => mockUseResults(view),
+}))
+
+vi.mock('../../feedback', () => ({
+  useFeedback: () => mockUseFeedback(),
+  getFeedbackErrorMessage: (error: unknown) => (error instanceof Error ? error.message : 'Unable to save feedback right now.'),
 }))
 
 const createResult = (
@@ -45,6 +51,8 @@ const createResult = (
   relevanceScore: 0.8,
   scoredAt: '2026-02-14T10:00:00Z',
   scoreVersion: 'baseline',
+  manualLabel: null as 'relevant' | 'irrelevant' | null,
+  manualLabelUpdatedAt: null as string | null,
   ...overrides,
 })
 
@@ -60,6 +68,13 @@ const renderPage = (initialEntry = '/results') => {
 describe('ResultsPage', () => {
   beforeEach(() => {
     mockUseResults.mockReset()
+    mockUseFeedback.mockReset()
+    mockUseFeedback.mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
+      isError: false,
+      error: null,
+    })
   })
 
   it('defaults to today and updates URL on tab switch', async () => {
@@ -328,5 +343,74 @@ describe('ResultsPage', () => {
     renderPage('/results?view=all-time')
     expect(screen.getByText(/updating results/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /previous content/i })).toBeInTheDocument()
+  })
+
+  it('cycles manual feedback via title activation and keeps list/detail pills in sync', async () => {
+    let todayResults = [createResult(1, 'Cycle me', 'run-today', { manualLabel: null })]
+    const mutate = vi.fn(({ resultId, label }: { resultId: number; label: 'relevant' | 'irrelevant' | null }) => {
+      todayResults = todayResults.map((item) => (item.id === resultId ? { ...item, manualLabel: label } : item))
+    })
+
+    mockUseFeedback.mockReturnValue({
+      mutate,
+      isPending: false,
+      isError: false,
+      error: null,
+    })
+
+    mockUseResults.mockImplementation(() => ({
+      data: todayResults,
+      isLoading: false,
+      isFetching: false,
+      error: null,
+    }))
+
+    const user = userEvent.setup()
+    const firstRender = renderPage('/results?view=today')
+
+    await user.click(screen.getByRole('button', { name: /cycle manual feedback label/i }))
+    expect(mutate).toHaveBeenNthCalledWith(1, { resultId: 1, label: 'relevant' })
+    firstRender.unmount()
+
+    const secondRender = renderPage('/results?view=today')
+    expect(screen.getAllByText('Relevant').length).toBe(2)
+
+    await user.click(screen.getByRole('button', { name: /cycle manual feedback label/i }))
+    expect(mutate).toHaveBeenNthCalledWith(2, { resultId: 1, label: 'irrelevant' })
+    secondRender.unmount()
+
+    const thirdRender = renderPage('/results?view=today')
+    expect(screen.getAllByText('Irrelevant').length).toBe(2)
+
+    await user.click(screen.getByRole('button', { name: /cycle manual feedback label/i }))
+    expect(mutate).toHaveBeenNthCalledWith(3, { resultId: 1, label: null })
+    thirdRender.unmount()
+
+    renderPage('/results?view=today')
+    expect(screen.queryByText('Relevant')).not.toBeInTheDocument()
+    expect(screen.queryByText('Irrelevant')).not.toBeInTheDocument()
+  })
+
+  it('blocks additional title cycles while feedback mutation is pending', async () => {
+    const mutate = vi.fn()
+    mockUseFeedback.mockReturnValue({
+      mutate,
+      isPending: true,
+      isError: false,
+      error: null,
+    })
+    mockUseResults.mockImplementation(() => ({
+      data: [createResult(1, 'Pending cycle', 'run-today')],
+      isLoading: false,
+      isFetching: false,
+      error: null,
+    }))
+
+    const user = userEvent.setup()
+    renderPage('/results?view=today')
+
+    await user.click(screen.getByRole('button', { name: /cycle manual feedback label/i }))
+
+    expect(mutate).not.toHaveBeenCalled()
   })
 })

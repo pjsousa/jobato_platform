@@ -57,6 +57,28 @@
   font-weight: 600;
 }
 
+.manual-label-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.manual-label-pill--relevant {
+  color: #0d5f3f;
+  background: #def6ea;
+  border: 1px solid #9dd6bc;
+}
+
+.manual-label-pill--irrelevant {
+  color: #7c2d19;
+  background: #ffe8df;
+  border: 1px solid #e7b3a4;
+}
+
 @media (min-width: 1024px) {
   .results-grid {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
