@@ -57,13 +57,13 @@ development_status:
   epic-2-retrospective: optional
 
   epic-3: in-progress
-  3-1-normalize-urls-for-stable-dedupe-keys: ready-for-dev
-  3-2-detect-and-link-duplicates: ready-for-dev
-  3-3-assign-relevance-scores-baseline: ready-for-dev
-  3-4-pluggable-model-interface-and-registry: ready-for-dev
-  3-5-parallel-candidate-training-and-evaluation: ready-for-dev
-  3-6-model-selection-and-activation: ready-for-dev
-  3-7-daily-retrain-for-the-active-model: ready-for-dev
+  3-1-normalize-urls-for-stable-dedupe-keys: review
+  3-2-detect-and-link-duplicates: review
+  3-3-assign-relevance-scores-baseline: review
+  3-4-pluggable-model-interface-and-registry: review
+  3-5-parallel-candidate-training-and-evaluation: review
+  3-6-model-selection-and-activation: review
+  3-7-daily-retrain-for-the-active-model: review
   epic-3-retrospective: optional
 
   epic-4: in-progress

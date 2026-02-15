@@ -8,10 +8,10 @@ You are my implementation planning agent for this repository.
 MODE:
 - PLAN ONLY for one story.
 - Do not write implementation code, do not commit
-- write plan output into docs/prompts/story-4-1-today-and-all-time-results-views-prompt.md
+- write plan output into docs/prompts/story-<EPIC-STORYNUMBER>-<STORYTITLE>.md
 
 TARGET STORY:
-- 4-1: today-and-all-time-results-views
+- <EPIC-NUMBER>: <STORYTITLE>
 
 
 READ THESE FILES FIRST (in order):
