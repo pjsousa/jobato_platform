@@ -2,9 +2,12 @@ package com.jobato.api.service;
 
 import com.jobato.api.model.ResultItem;
 import com.jobato.api.repository.ResultRepository;
+import com.jobato.api.repository.RunSummaryRepository;
+import com.jobato.api.model.RunSummary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -15,12 +18,74 @@ import static org.mockito.Mockito.*;
 class ResultServiceTest {
 
     private ResultRepository resultRepository;
+    private RunSummaryRepository runSummaryRepository;
     private ResultService resultService;
 
     @BeforeEach
     void setUp() {
         resultRepository = mock(ResultRepository.class);
-        resultService = new ResultService(resultRepository);
+        runSummaryRepository = mock(RunSummaryRepository.class);
+        resultService = new ResultService(resultRepository, runSummaryRepository);
+    }
+
+    @Test
+    void getResults_usesRunIdWhenProvided() {
+        String runId = "run-override";
+        List<ResultItem> results = Arrays.asList(createResultItem(1, runId, false, false));
+        when(resultRepository.findByRunId(runId, false)).thenReturn(results);
+
+        List<ResultItem> returned = resultService.getResults(runId, "all-time", false);
+
+        assertEquals(1, returned.size());
+        verify(resultRepository).findByRunId(runId, false);
+        verifyNoInteractions(runSummaryRepository);
+    }
+
+    @Test
+    void getResults_returnsAllTimeWhenRequested() {
+        List<ResultItem> results = Arrays.asList(
+            createResultItem(1, "run-2", false, false),
+            createResultItem(2, "run-1", false, false)
+        );
+        when(resultRepository.findAll(false)).thenReturn(results);
+
+        List<ResultItem> returned = resultService.getResults(null, "all-time", false);
+
+        assertEquals(2, returned.size());
+        verify(resultRepository).findAll(false);
+        verifyNoInteractions(runSummaryRepository);
+    }
+
+    @Test
+    void getResults_returnsTodayFromLatestRunSummary() {
+        RunSummary latest = new RunSummary(
+            "run-latest",
+            Instant.parse("2026-02-14T10:00:00Z"),
+            10L,
+            1,
+            0,
+            "completed"
+        );
+        List<ResultItem> results = Arrays.asList(createResultItem(1, "run-latest", false, false));
+        when(runSummaryRepository.findLatest()).thenReturn(Optional.of(latest));
+        when(resultRepository.findByRunId("run-latest", false)).thenReturn(results);
+
+        List<ResultItem> returned = resultService.getResults(null, "today", false);
+
+        assertEquals(1, returned.size());
+        verify(runSummaryRepository).findLatest();
+        verify(resultRepository).findByRunId("run-latest", false);
+    }
+
+    @Test
+    void getResults_returnsEmptyWhenTodayHasNoLatestRun() {
+        when(runSummaryRepository.findLatest()).thenReturn(Optional.empty());
+
+        List<ResultItem> returned = resultService.getResults(null, "today", false);
+
+        assertTrue(returned.isEmpty());
+        verify(runSummaryRepository).findLatest();
+        verify(resultRepository, never()).findByRunId(anyString(), anyBoolean());
     }
 
     @Test

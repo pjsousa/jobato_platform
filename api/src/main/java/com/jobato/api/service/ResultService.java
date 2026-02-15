@@ -2,6 +2,7 @@ package com.jobato.api.service;
 
 import com.jobato.api.model.ResultItem;
 import com.jobato.api.repository.ResultRepository;
+import com.jobato.api.repository.RunSummaryRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,9 +11,25 @@ import java.util.Optional;
 @Service
 public class ResultService {
     private final ResultRepository resultRepository;
+    private final RunSummaryRepository runSummaryRepository;
 
-    public ResultService(ResultRepository resultRepository) {
+    public ResultService(ResultRepository resultRepository, RunSummaryRepository runSummaryRepository) {
         this.resultRepository = resultRepository;
+        this.runSummaryRepository = runSummaryRepository;
+    }
+
+    public List<ResultItem> getResults(String runId, String view, boolean includeHidden) {
+        if (runId != null && !runId.isBlank()) {
+            return resultRepository.findByRunId(runId, includeHidden);
+        }
+
+        if ("all-time".equals(view)) {
+            return resultRepository.findAll(includeHidden);
+        }
+
+        return runSummaryRepository.findLatest()
+            .map(summary -> resultRepository.findByRunId(summary.getRunId(), includeHidden))
+            .orElseGet(List::of);
     }
 
     /**

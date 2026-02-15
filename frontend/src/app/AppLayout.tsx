@@ -29,6 +29,12 @@ export const AppLayout = () => (
         >
           Runs
         </NavLink>
+        <NavLink
+          to="/results"
+          className={({ isActive }) => `app-nav__link${isActive ? ' active' : ''}`}
+        >
+          Results
+        </NavLink>
       </nav>
     </header>
     <Outlet />

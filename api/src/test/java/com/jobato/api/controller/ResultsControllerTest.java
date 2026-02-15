@@ -34,16 +34,16 @@ class ResultsControllerTest {
             createResultItem(1, runId, false),
             createResultItem(2, runId, false)
         );
-        when(resultService.getResultsForRun(runId, false)).thenReturn(visibleResults);
+        when(resultService.getResults(runId, "today", false)).thenReturn(visibleResults);
 
         // Act
-        ResponseEntity<List<Map<String, Object>>> response = resultsController.getResults(runId, null);
+        ResponseEntity<List<Map<String, Object>>> response = resultsController.getResults(runId, "today", null);
 
         // Assert
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals(2, response.getBody().size());
-        verify(resultService).getResultsForRun(runId, false);
+        verify(resultService).getResults(runId, "today", false);
     }
 
     @Test
@@ -54,16 +54,16 @@ class ResultsControllerTest {
             createResultItem(1, runId, false),
             createResultItem(2, runId, true)
         );
-        when(resultService.getResultsForRun(runId, true)).thenReturn(allResults);
+        when(resultService.getResults(runId, "today", true)).thenReturn(allResults);
 
         // Act
-        ResponseEntity<List<Map<String, Object>>> response = resultsController.getResults(runId, true);
+        ResponseEntity<List<Map<String, Object>>> response = resultsController.getResults(runId, "today", true);
 
         // Assert
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals(2, response.getBody().size());
-        verify(resultService).getResultsForRun(runId, true);
+        verify(resultService).getResults(runId, "today", true);
     }
 
     @Test
@@ -77,10 +77,10 @@ class ResultsControllerTest {
             null, false, false, 2,  // canonicalId, isDuplicate, isHidden, duplicateCount
             0.0, "2026-02-13T10:00:00Z", "baseline"  // relevanceScore, scoredAt, scoreVersion
         );
-        when(resultService.getResultsForRun(runId, false)).thenReturn(Arrays.asList(result));
+        when(resultService.getResults(runId, "today", false)).thenReturn(Arrays.asList(result));
 
         // Act
-        ResponseEntity<List<Map<String, Object>>> response = resultsController.getResults(runId, false);
+        ResponseEntity<List<Map<String, Object>>> response = resultsController.getResults(runId, "today", false);
 
         // Assert
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -195,10 +195,10 @@ class ResultsControllerTest {
             null, false, false, 0,
             0.75, "2026-02-13T10:00:00Z", "baseline"
         );
-        when(resultService.getResultsForRun(runId, false)).thenReturn(Arrays.asList(result));
+        when(resultService.getResults(runId, "today", false)).thenReturn(Arrays.asList(result));
 
         // Act
-        ResponseEntity<List<Map<String, Object>>> response = resultsController.getResults(runId, false);
+        ResponseEntity<List<Map<String, Object>>> response = resultsController.getResults(runId, "today", false);
 
         // Assert
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -219,10 +219,10 @@ class ResultsControllerTest {
             null, false, false, 0,
             null, null, null  // Not yet scored
         );
-        when(resultService.getResultsForRun(runId, false)).thenReturn(Arrays.asList(result));
+        when(resultService.getResults(runId, "today", false)).thenReturn(Arrays.asList(result));
 
         // Act
-        ResponseEntity<List<Map<String, Object>>> response = resultsController.getResults(runId, false);
+        ResponseEntity<List<Map<String, Object>>> response = resultsController.getResults(runId, "today", false);
 
         // Assert
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -230,6 +230,26 @@ class ResultsControllerTest {
         assertNull(resultMap.get("relevanceScore"));
         assertNull(resultMap.get("scoredAt"));
         assertNull(resultMap.get("scoreVersion"));
+    }
+
+    @Test
+    void getResults_defaultsToTodayView() {
+        when(resultService.getResults(null, "today", false)).thenReturn(List.of());
+
+        ResponseEntity<List<Map<String, Object>>> response = resultsController.getResults(null, "today", null);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(resultService).getResults(null, "today", false);
+    }
+
+    @Test
+    void getResults_supportsAllTimeView() {
+        when(resultService.getResults(null, "all-time", false)).thenReturn(List.of());
+
+        ResponseEntity<List<Map<String, Object>>> response = resultsController.getResults(null, "all-time", false);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(resultService).getResults(null, "all-time", false);
     }
 
     private ResultItem createResultItem(int id, String runId, boolean isHidden) {

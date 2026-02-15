@@ -3,6 +3,7 @@ import { createBrowserRouter } from 'react-router-dom'
 import { AppLayout } from './AppLayout'
 import { AllowlistPage } from '../features/allowlist'
 import { QueryPage } from '../features/queries'
+import { ResultsPage } from '../features/results'
 import { RunPage } from '../features/runs'
 
 export const router = createBrowserRouter([
@@ -21,6 +22,10 @@ export const router = createBrowserRouter([
       {
         path: 'runs',
         element: <RunPage />,
+      },
+      {
+        path: 'results',
+        element: <ResultsPage />,
       },
     ],
   },

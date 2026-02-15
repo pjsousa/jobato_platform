@@ -27,16 +27,17 @@ public class ResultsController {
      */
     @GetMapping
     public ResponseEntity<List<Map<String, Object>>> getResults(
-            @RequestParam String runId,
+            @RequestParam(required = false) String runId,
+            @RequestParam(required = false, defaultValue = "today") String view,
             @RequestParam(required = false) Boolean includeHidden) {
-        
+
         boolean shouldIncludeHidden = includeHidden != null && includeHidden;
-        List<ResultItem> results = resultService.getResultsForRun(runId, shouldIncludeHidden);
-        
+        List<ResultItem> results = resultService.getResults(runId, view, shouldIncludeHidden);
+
         List<Map<String, Object>> response = results.stream()
             .map(this::toResponse)
             .collect(Collectors.toList());
-        
+
         return ResponseEntity.ok(response);
     }
 

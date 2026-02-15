@@ -34,7 +34,7 @@ public class ResultRepository {
             sql.append(" AND (is_hidden = 0 OR is_hidden IS NULL)");
         }
         
-        sql.append(" ORDER BY created_at DESC");
+        sql.append(" ORDER BY created_at DESC, id DESC");
         
         List<ResultItem> results = new ArrayList<>();
         try (Connection connection = activeRunDatabase.openConnection();
@@ -88,7 +88,7 @@ public class ResultRepository {
             sql.append(" AND (is_hidden = 0 OR is_hidden IS NULL)");
         }
         
-        sql.append(" ORDER BY created_at DESC");
+        sql.append(" ORDER BY created_at DESC, id DESC");
         
         List<ResultItem> results = new ArrayList<>();
         try (Connection connection = activeRunDatabase.openConnection();
@@ -111,6 +111,35 @@ public class ResultRepository {
 
     public List<ResultItem> findVisibleForRun(String runId) {
         return findByRunId(runId, false);
+    }
+
+    public List<ResultItem> findAll(boolean includeHidden) {
+        StringBuilder sql = new StringBuilder("""
+            SELECT id, run_id, query_id, query_text, search_query, domain, title, snippet,
+                   raw_url, final_url, created_at, raw_html_path, visible_text,
+                   cache_key, cached_at, last_seen_at, normalized_url,
+                   canonical_id, is_duplicate, is_hidden, duplicate_count,
+                   relevance_score, scored_at, score_version
+            FROM run_items
+            """);
+
+        if (!includeHidden) {
+            sql.append(" WHERE (is_hidden = 0 OR is_hidden IS NULL)");
+        }
+
+        sql.append(" ORDER BY created_at DESC, id DESC");
+
+        List<ResultItem> results = new ArrayList<>();
+        try (Connection connection = activeRunDatabase.openConnection();
+             PreparedStatement statement = connection.prepareStatement(sql.toString())) {
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                results.add(map(resultSet));
+            }
+        } catch (SQLException exception) {
+            throw new IllegalStateException("Failed to load all results", exception);
+        }
+        return results;
     }
 
     public int countByRunId(String runId, boolean includeHidden) {
