@@ -23,6 +23,18 @@
   background: var(--accent-soft);
 }
 
+.results-item--irrelevant {
+  background: #f7f3ee;
+  border-style: dashed;
+}
+
+.results-item--irrelevant .results-item__title,
+.results-item--irrelevant .results-item__company,
+.results-item--irrelevant .results-item__snippet,
+.results-item--irrelevant .results-item__meta {
+  color: color-mix(in srgb, var(--muted) 85%, #3f3f3f);
+}
+
 .results-item__title {
   font-weight: 600;
   color: var(--ink);

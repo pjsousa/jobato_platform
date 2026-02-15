@@ -33,6 +33,16 @@
   margin: 0;
 }
 
+.result-details--irrelevant h3,
+.result-details--irrelevant p,
+.result-details--irrelevant dd {
+  color: color-mix(in srgb, var(--muted) 86%, #3f3f3f);
+}
+
+.result-details--irrelevant dt {
+  color: color-mix(in srgb, var(--muted) 92%, #777);
+}
+
 .result-details__canonical-context {
   padding: 10px 12px;
   border-radius: 10px;
@@ -61,4 +71,9 @@
 
 .result-details a {
   color: var(--accent);
+}
+
+.result-details--irrelevant .result-details__canonical-context {
+  background: #f7f3ee;
+  border-style: dashed;
 }

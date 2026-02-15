@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -176,6 +176,98 @@ describe('ResultsPage', () => {
     await user.click(screen.getByRole('tab', { name: /all time/i }))
 
     expect(screen.getByRole('heading', { level: 3, name: 'All-time first' })).toBeInTheDocument()
+  })
+
+  it('hides irrelevant rows by default and shows visible result count', () => {
+    const todayResults = [
+      createResult(1, 'Relevant first', 'run-today', { manualLabel: 'relevant' }),
+      createResult(2, 'Irrelevant second', 'run-today', { manualLabel: 'irrelevant' }),
+      createResult(3, 'Unlabeled third', 'run-today', { manualLabel: null }),
+    ]
+
+    mockUseResults.mockImplementation(() => ({
+      data: todayResults,
+      isLoading: false,
+      isFetching: false,
+      error: null,
+    }))
+
+    const { router } = renderPage('/results?view=today')
+
+    expect(router.state.location.search).toBe('?view=today')
+    expect(screen.getByRole('heading', { level: 2, name: 'Result list (2)' })).toBeInTheDocument()
+    expect(screen.getByText('1 irrelevant result(s) hidden.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /irrelevant second/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 3, name: 'Relevant first' })).toBeInTheDocument()
+  })
+
+  it('shows irrelevant rows when toggled and keeps URL history state', async () => {
+    const todayResults = [
+      createResult(1, 'Relevant first', 'run-today', { manualLabel: 'relevant' }),
+      createResult(2, 'Irrelevant second', 'run-today', { manualLabel: 'irrelevant' }),
+    ]
+
+    mockUseResults.mockImplementation(() => ({
+      data: todayResults,
+      isLoading: false,
+      isFetching: false,
+      error: null,
+    }))
+
+    const user = userEvent.setup()
+    const { router } = renderPage('/results?view=today&runId=run-42')
+
+    await user.click(screen.getByLabelText(/show irrelevant/i))
+
+    await waitFor(() => {
+      expect(router.state.location.search).toBe('?view=today&runId=run-42&showIrrelevant=true')
+    })
+    expect(screen.getByRole('heading', { level: 2, name: 'Result list (2)' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /irrelevant second/i })).toBeInTheDocument()
+
+    await act(async () => {
+      await router.navigate(-1)
+    })
+    await waitFor(() => {
+      expect(router.state.location.search).toBe('?view=today&runId=run-42')
+    })
+    expect(screen.queryByRole('button', { name: /irrelevant second/i })).not.toBeInTheDocument()
+
+    await act(async () => {
+      await router.navigate(1)
+    })
+    await waitFor(() => {
+      expect(router.state.location.search).toBe('?view=today&runId=run-42&showIrrelevant=true')
+    })
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /irrelevant second/i })).toBeInTheDocument()
+    })
+  })
+
+  it('falls back to the next visible result when selected irrelevant is hidden', async () => {
+    const todayResults = [
+      createResult(1, 'Relevant first', 'run-today', { manualLabel: 'relevant' }),
+      createResult(2, 'Irrelevant second', 'run-today', { manualLabel: 'irrelevant' }),
+      createResult(3, 'Relevant third', 'run-today', { manualLabel: null }),
+    ]
+
+    mockUseResults.mockImplementation(() => ({
+      data: todayResults,
+      isLoading: false,
+      isFetching: false,
+      error: null,
+    }))
+
+    const user = userEvent.setup()
+    renderPage('/results?view=today&showIrrelevant=true')
+
+    await user.click(screen.getByRole('button', { name: /irrelevant second/i }))
+    expect(screen.getByRole('heading', { level: 3, name: 'Irrelevant second' })).toBeInTheDocument()
+
+    await user.click(screen.getByLabelText(/show irrelevant/i))
+
+    expect(screen.queryByRole('button', { name: /irrelevant second/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 3, name: 'Relevant third' })).toBeInTheDocument()
   })
 
   it('keeps selection when crossing breakpoint widths', async () => {
@@ -366,27 +458,27 @@ describe('ResultsPage', () => {
     }))
 
     const user = userEvent.setup()
-    const firstRender = renderPage('/results?view=today')
+    const firstRender = renderPage('/results?view=today&showIrrelevant=true')
 
     await user.click(screen.getByRole('button', { name: /cycle manual feedback label/i }))
     expect(mutate).toHaveBeenNthCalledWith(1, { resultId: 1, label: 'relevant' })
     firstRender.unmount()
 
-    const secondRender = renderPage('/results?view=today')
+    const secondRender = renderPage('/results?view=today&showIrrelevant=true')
     expect(screen.getAllByText('Relevant').length).toBe(2)
 
     await user.click(screen.getByRole('button', { name: /cycle manual feedback label/i }))
     expect(mutate).toHaveBeenNthCalledWith(2, { resultId: 1, label: 'irrelevant' })
     secondRender.unmount()
 
-    const thirdRender = renderPage('/results?view=today')
+    const thirdRender = renderPage('/results?view=today&showIrrelevant=true')
     expect(screen.getAllByText('Irrelevant').length).toBe(2)
 
     await user.click(screen.getByRole('button', { name: /cycle manual feedback label/i }))
     expect(mutate).toHaveBeenNthCalledWith(3, { resultId: 1, label: null })
     thirdRender.unmount()
 
-    renderPage('/results?view=today')
+    renderPage('/results?view=today&showIrrelevant=true')
     expect(screen.queryByText('Relevant')).not.toBeInTheDocument()
     expect(screen.queryByText('Irrelevant')).not.toBeInTheDocument()
   })

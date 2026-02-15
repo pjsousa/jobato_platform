@@ -19,6 +19,8 @@ type ResultsListProps = {
   isEmpty: boolean
   errorMessage: string | null
   emptyStateMessage: string
+  hiddenIrrelevantCount: number
+  showIrrelevant: boolean
 }
 
 export const ResultsList = ({
@@ -29,9 +31,14 @@ export const ResultsList = ({
   isEmpty,
   errorMessage,
   emptyStateMessage,
+  hiddenIrrelevantCount,
+  showIrrelevant,
 }: ResultsListProps) => (
   <article className="card">
-    <h2>Result list</h2>
+    <h2>Result list ({results.length})</h2>
+    {!showIrrelevant && hiddenIrrelevantCount > 0 ? (
+      <p className="results-state">{hiddenIrrelevantCount} irrelevant result(s) hidden.</p>
+    ) : null}
     {isLoading ? <p className="results-state">Loading results...</p> : null}
     {errorMessage ? <p className="results-error">{errorMessage}</p> : null}
     {isEmpty ? <p className="results-state">{emptyStateMessage}</p> : null}
@@ -43,7 +50,9 @@ export const ResultsList = ({
             <li key={item.id}>
               <button
                 type="button"
-                className={`results-item${selectedResultId === item.id ? ' selected' : ''}`}
+                className={`results-item${selectedResultId === item.id ? ' selected' : ''}${
+                  item.manualLabel === 'irrelevant' ? ' results-item--irrelevant' : ''
+                }`}
                 onClick={() => onSelectResult(item.id)}
               >
                 <span className="results-item__title-row">

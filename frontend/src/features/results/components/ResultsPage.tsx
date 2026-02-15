@@ -34,6 +34,7 @@ const getNextManualLabel = (label: ManualLabel): ManualLabel => {
 export const ResultsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const view = resolveView(searchParams.get('view'))
+  const showIrrelevant = searchParams.get('showIrrelevant') === 'true'
 
   useEffect(() => {
     if (searchParams.get('view') !== view) {
@@ -46,32 +47,50 @@ export const ResultsPage = () => {
   const { data, isLoading, isFetching, error } = useResults(view)
   const feedbackMutation = useFeedback()
   const results: ResultDisplayRecord[] = data ?? []
+  const visibleResults = useMemo(
+    () => (showIrrelevant ? results : results.filter((item) => item.manualLabel !== 'irrelevant')),
+    [results, showIrrelevant],
+  )
+  const hiddenIrrelevantCount = results.length - visibleResults.length
   const [selectedId, setSelectedId] = useState<number | null>(null)
 
   useEffect(() => {
-    if (results.length === 0) {
+    if (visibleResults.length === 0) {
       setSelectedId(null)
       return
     }
 
     setSelectedId((previous) => {
-      if (previous != null && results.some((item) => item.id === previous)) {
+      if (previous != null && visibleResults.some((item) => item.id === previous)) {
         return previous
       }
-      return results[0].id
+
+      if (previous != null) {
+        const previousIndex = results.findIndex((item) => item.id === previous)
+        if (previousIndex >= 0) {
+          const nextVisible = results
+            .slice(previousIndex + 1)
+            .find((item) => showIrrelevant || item.manualLabel !== 'irrelevant')
+          if (nextVisible) {
+            return nextVisible.id
+          }
+        }
+      }
+
+      return visibleResults[0].id
     })
-  }, [results])
+  }, [results, showIrrelevant, visibleResults])
 
   const selectedItem = useMemo(() => {
     if (selectedId == null) {
       return null
     }
-    return results.find((item) => item.id === selectedId) ?? null
-  }, [results, selectedId])
+    return visibleResults.find((item) => item.id === selectedId) ?? null
+  }, [selectedId, visibleResults])
 
   const showInitialLoading = isLoading && results.length === 0
   const isUpdating = isFetching && !showInitialLoading
-  const isEmpty = !showInitialLoading && results.length === 0
+  const isEmpty = !showInitialLoading && visibleResults.length === 0
 
   const emptyStateMessage =
     view === 'today'
@@ -82,9 +101,23 @@ export const ResultsPage = () => {
     if (nextView === view) {
       return
     }
-    const nextParams = new URLSearchParams(searchParams)
-    nextParams.set('view', nextView)
-    setSearchParams(nextParams)
+    setSearchParams((previousParams) => {
+      const nextParams = new URLSearchParams(previousParams)
+      nextParams.set('view', nextView)
+      return nextParams
+    })
+  }
+
+  const changeShowIrrelevant = (nextValue: boolean) => {
+    setSearchParams((previousParams) => {
+      const nextParams = new URLSearchParams(previousParams)
+      if (nextValue) {
+        nextParams.set('showIrrelevant', 'true')
+      } else {
+        nextParams.delete('showIrrelevant')
+      }
+      return nextParams
+    })
   }
 
   const handleCycleManualLabel = () => {
@@ -128,18 +161,29 @@ export const ResultsPage = () => {
             All Time
           </button>
         </div>
+        <label className="results-toggle" htmlFor="show-irrelevant-toggle">
+          <input
+            id="show-irrelevant-toggle"
+            type="checkbox"
+            checked={showIrrelevant}
+            onChange={(event) => changeShowIrrelevant(event.currentTarget.checked)}
+          />
+          Show irrelevant
+        </label>
         {isUpdating ? <span className="results-updating">Updating results...</span> : null}
       </section>
 
       <section className="results-grid">
         <ResultsList
-          results={results}
+          results={visibleResults}
           selectedResultId={selectedId}
           onSelectResult={setSelectedId}
           isLoading={showInitialLoading}
           isEmpty={isEmpty}
           errorMessage={error && !showInitialLoading ? getErrorMessage(error) : null}
           emptyStateMessage={emptyStateMessage}
+          hiddenIrrelevantCount={hiddenIrrelevantCount}
+          showIrrelevant={showIrrelevant}
         />
         <ResultDetail
           selectedResult={selectedItem}

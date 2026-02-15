@@ -83,6 +83,23 @@ describe('ResultDetail', () => {
     expect(screen.getByText('Irrelevant')).toBeTruthy()
   })
 
+  it('applies de-emphasis class when selected result is irrelevant', () => {
+    const { container } = render(
+      <ResultDetail
+        selectedResult={createResult({ manualLabel: 'irrelevant' })}
+        isLoading={false}
+        isEmpty={false}
+        onCycleManualLabel={vi.fn()}
+        isFeedbackPending={false}
+        feedbackErrorMessage={null}
+      />,
+    )
+
+    const detailsRoot = container.querySelector('.result-details')
+    expect(detailsRoot?.className).toContain('result-details--irrelevant')
+    expect(screen.getByText('Irrelevant')).toBeTruthy()
+  })
+
   it('disables title activation while feedback mutation is pending', async () => {
     const onCycleManualLabel = vi.fn()
     const user = userEvent.setup()

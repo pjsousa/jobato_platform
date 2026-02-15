@@ -69,7 +69,7 @@ const ResultDetails = ({
   const manualLabel = getManualLabelDisplay(item.manualLabel)
 
   return (
-    <div className="result-details">
+    <div className={`result-details${item.manualLabel === 'irrelevant' ? ' result-details--irrelevant' : ''}`}>
       <div className="result-details__title-row">
         <button
           type="button"
