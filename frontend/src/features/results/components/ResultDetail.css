@@ -1,0 +1,27 @@
+.result-details {
+  margin-top: 10px;
+  display: grid;
+  gap: 12px;
+}
+
+.result-details h3 {
+  margin: 0;
+}
+
+.result-details dl {
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.result-details dt {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.result-details dd {
+  margin: 2px 0 0;
+  font-weight: 600;
+}

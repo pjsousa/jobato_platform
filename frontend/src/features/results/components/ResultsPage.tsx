@@ -3,6 +3,8 @@ import { useSearchParams } from 'react-router-dom'
 
 import { ApiError, type ResultRecord, type ResultsView } from '../api/results-api'
 import { useResults } from '../hooks/use-results'
+import { ResultDetail } from './ResultDetail'
+import { ResultsList } from './ResultsList'
 import './ResultsPage.css'
 
 const resolveView = (rawValue: string | null): ResultsView =>
@@ -106,63 +108,17 @@ export const ResultsPage = () => {
       </section>
 
       <section className="results-grid">
-        <article className="card">
-          <h2>Result list</h2>
-          {showInitialLoading ? <p className="results-state">Loading results...</p> : null}
-          {error && !showInitialLoading ? <p className="results-error">{getErrorMessage(error)}</p> : null}
-          {isEmpty ? <p className="results-state">{emptyStateMessage}</p> : null}
-          {!showInitialLoading && !isEmpty ? (
-            <ul className="results-list">
-              {results.map((item) => (
-                <li key={item.id}>
-                  <button
-                    type="button"
-                    className={`results-item${selectedId === item.id ? ' selected' : ''}`}
-                    onClick={() => setSelectedId(item.id)}
-                  >
-                    <span className="results-item__title">{item.title ?? '(Untitled result)'}</span>
-                    <span className="results-item__meta">{item.domain ?? 'Unknown domain'}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </article>
-
-        <article className="card">
-          <h2>Details</h2>
-          {!selectedItem ? (
-            <p className="results-state">Select a result to inspect details.</p>
-          ) : (
-            <ResultDetails item={selectedItem} />
-          )}
-        </article>
+        <ResultsList
+          results={results}
+          selectedResultId={selectedId}
+          onSelectResult={setSelectedId}
+          isLoading={showInitialLoading}
+          isEmpty={isEmpty}
+          errorMessage={error && !showInitialLoading ? getErrorMessage(error) : null}
+          emptyStateMessage={emptyStateMessage}
+        />
+        <ResultDetail selectedResult={selectedItem} isLoading={showInitialLoading} isEmpty={isEmpty} />
       </section>
     </div>
   )
 }
-
-const ResultDetails = ({ item }: { item: ResultRecord }) => (
-  <div className="result-details">
-    <h3>{item.title ?? '(Untitled result)'}</h3>
-    <p>{item.snippet ?? 'No snippet available.'}</p>
-    <dl>
-      <div>
-        <dt>Run</dt>
-        <dd>{item.runId}</dd>
-      </div>
-      <div>
-        <dt>Domain</dt>
-        <dd>{item.domain ?? 'Unknown'}</dd>
-      </div>
-      <div>
-        <dt>Created</dt>
-        <dd>{item.createdAt ?? 'Unknown'}</dd>
-      </div>
-      <div>
-        <dt>Final URL</dt>
-        <dd>{item.finalUrl ?? 'N/A'}</dd>
-      </div>
-    </dl>
-  </div>
-)

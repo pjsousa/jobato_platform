@@ -78,7 +78,42 @@ describe('ResultsPage', () => {
     expect(mockUseResults).toHaveBeenCalledWith('all-time')
   })
 
-  it('preserves selected result when it exists in next view', async () => {
+  it('defaults to the first today result and hydrates detail', () => {
+    const todayResults = [createResult(1, 'Today first', 'run-today'), createResult(2, 'Today second', 'run-today')]
+
+    mockUseResults.mockImplementation((view: 'today' | 'all-time') => ({
+      data: view === 'today' ? todayResults : [],
+      isLoading: false,
+      isFetching: false,
+      error: null,
+    }))
+
+    renderPage('/results?view=today')
+
+    expect(screen.getByRole('heading', { level: 3, name: 'Today first' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /today first/i })).toHaveClass('selected')
+  })
+
+  it('updates highlight and detail when selecting another row', async () => {
+    const todayResults = [createResult(1, 'Today first', 'run-today'), createResult(2, 'Today second', 'run-today')]
+
+    mockUseResults.mockImplementation((view: 'today' | 'all-time') => ({
+      data: view === 'today' ? todayResults : [],
+      isLoading: false,
+      isFetching: false,
+      error: null,
+    }))
+
+    const user = userEvent.setup()
+    renderPage('/results?view=today')
+
+    await user.click(screen.getByRole('button', { name: /today second/i }))
+
+    expect(screen.getByRole('heading', { level: 3, name: 'Today second' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /today second/i })).toHaveClass('selected')
+  })
+
+  it('preserves selected result when it exists in the next query result set', async () => {
     const todayResults = [createResult(1, 'Today first', 'run-today'), createResult(2, 'Shared result', 'run-today')]
     const allTimeResults = [createResult(2, 'Shared result', 'run-older'), createResult(3, 'All-time only', 'run-older')]
 
@@ -98,7 +133,7 @@ describe('ResultsPage', () => {
     expect(screen.getByRole('heading', { level: 3, name: 'Shared result' })).toBeInTheDocument()
   })
 
-  it('falls back to first result when previous selection disappears', async () => {
+  it('falls back to first result when previous selection disappears in next query result set', async () => {
     const todayResults = [createResult(1, 'Today first', 'run-today'), createResult(2, 'Today second', 'run-today')]
     const allTimeResults = [createResult(4, 'All-time first', 'run-older')]
 
@@ -118,7 +153,52 @@ describe('ResultsPage', () => {
     expect(screen.getByRole('heading', { level: 3, name: 'All-time first' })).toBeInTheDocument()
   })
 
-  it('shows loading, updating, and empty states', () => {
+  it('keeps selection when crossing breakpoint widths', async () => {
+    const todayResults = [createResult(1, 'Today first', 'run-today'), createResult(2, 'Today second', 'run-today')]
+
+    mockUseResults.mockImplementation(() => ({
+      data: todayResults,
+      isLoading: false,
+      isFetching: false,
+      error: null,
+    }))
+
+    const user = userEvent.setup()
+    renderPage('/results?view=today')
+
+    await user.click(screen.getByRole('button', { name: /today second/i }))
+
+    window.innerWidth = 900
+    window.dispatchEvent(new Event('resize'))
+    window.innerWidth = 1280
+    window.dispatchEvent(new Event('resize'))
+
+    expect(screen.getByRole('heading', { level: 3, name: 'Today second' })).toBeInTheDocument()
+  })
+
+  it('keeps API ordering in the rendered list', () => {
+    const orderedResults = [
+      createResult(3, 'First from API', 'run-today'),
+      createResult(1, 'Second from API', 'run-today'),
+      createResult(2, 'Third from API', 'run-today'),
+    ]
+
+    mockUseResults.mockImplementation((view: 'today' | 'all-time') => ({
+      data: view === 'today' ? orderedResults : [],
+      isLoading: false,
+      isFetching: false,
+      error: null,
+    }))
+
+    renderPage('/results?view=today')
+
+    const renderedTitles = Array.from(document.querySelectorAll('.results-item__title')).map(
+      (node) => node.textContent,
+    )
+    expect(renderedTitles).toEqual(['First from API', 'Second from API', 'Third from API'])
+  })
+
+  it('shows loading, updating, and empty states and clears empty selection', () => {
     mockUseResults.mockImplementation((view: 'today' | 'all-time') => {
       if (view === 'today') {
         return {
@@ -139,6 +219,7 @@ describe('ResultsPage', () => {
 
     const { unmount } = renderPage('/results?view=today')
     expect(screen.getByText(/no results in today's run yet/i)).toBeInTheDocument()
+    expect(screen.getByText(/no result selected yet/i)).toBeInTheDocument()
 
     unmount()
 

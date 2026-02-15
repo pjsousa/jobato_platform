@@ -1,0 +1,34 @@
+.results-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.results-item {
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #fffdf9;
+  padding: 10px 12px;
+  cursor: pointer;
+  display: grid;
+  gap: 4px;
+}
+
+.results-item.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.results-item__title {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.results-item__meta {
+  color: var(--muted);
+  font-size: 14px;
+}
