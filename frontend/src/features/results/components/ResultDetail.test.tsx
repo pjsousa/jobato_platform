@@ -121,4 +121,28 @@ describe('ResultDetail', () => {
     await user.click(button)
     expect(onCycleManualLabel).not.toHaveBeenCalled()
   })
+
+  it('activates title toggle once per Enter and Space keypress', async () => {
+    const onCycleManualLabel = vi.fn()
+    const user = userEvent.setup()
+
+    render(
+      <ResultDetail
+        selectedResult={createResult({ manualLabel: null })}
+        isLoading={false}
+        isEmpty={false}
+        onCycleManualLabel={onCycleManualLabel}
+        isFeedbackPending={false}
+        feedbackErrorMessage={null}
+      />,
+    )
+
+    const button = screen.getByRole('button', { name: /cycle manual feedback label/i })
+    button.focus()
+
+    await user.keyboard('{Enter}')
+    await user.keyboard('{Space}')
+
+    expect(onCycleManualLabel).toHaveBeenCalledTimes(2)
+  })
 })

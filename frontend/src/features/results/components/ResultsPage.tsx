@@ -31,6 +31,16 @@ const getNextManualLabel = (label: ManualLabel): ManualLabel => {
   return null
 }
 
+const getAnnouncementMessage = (title: string, label: ManualLabel) => {
+  if (label === 'relevant') {
+    return `Manual label for ${title} set to Relevant.`
+  }
+  if (label === 'irrelevant') {
+    return `Manual label for ${title} set to Irrelevant.`
+  }
+  return `Manual label for ${title} cleared.`
+}
+
 export const ResultsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const view = resolveView(searchParams.get('view'))
@@ -53,6 +63,7 @@ export const ResultsPage = () => {
   )
   const hiddenIrrelevantCount = results.length - visibleResults.length
   const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [liveAnnouncement, setLiveAnnouncement] = useState('')
 
   useEffect(() => {
     if (visibleResults.length === 0) {
@@ -126,6 +137,7 @@ export const ResultsPage = () => {
     }
 
     const nextLabel = getNextManualLabel(selectedItem.manualLabel)
+    setLiveAnnouncement(getAnnouncementMessage(selectedItem.title, nextLabel))
     feedbackMutation.mutate({
       resultId: selectedItem.id,
       label: nextLabel,
@@ -194,6 +206,9 @@ export const ResultsPage = () => {
           feedbackErrorMessage={feedbackMutation.isError ? getFeedbackErrorMessage(feedbackMutation.error) : null}
         />
       </section>
+      <p className="results-live-region" aria-live="polite" aria-atomic="true">
+        {liveAnnouncement}
+      </p>
     </div>
   )
 }

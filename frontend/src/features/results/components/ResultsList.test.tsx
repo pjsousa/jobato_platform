@@ -1,4 +1,6 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
 import { ResultsList } from './ResultsList'
@@ -52,7 +54,7 @@ describe('ResultsList', () => {
       />,
     )
 
-    const irrelevantRow = screen.getByRole('button', { name: /irrelevant item/i })
+    const irrelevantRow = screen.getByRole('option', { name: /irrelevant item/i })
     expect(irrelevantRow.className).toContain('results-item--irrelevant')
     expect(screen.getByText('Irrelevant')).toBeTruthy()
   })
@@ -74,5 +76,69 @@ describe('ResultsList', () => {
 
     expect(screen.getByRole('heading', { level: 2, name: 'Result list (1)' })).toBeTruthy()
     expect(screen.getByText('2 irrelevant result(s) hidden.')).toBeTruthy()
+  })
+
+  it('supports ArrowUp, ArrowDown, Home, and End on listbox focus', async () => {
+    const user = userEvent.setup()
+
+    const KeyboardHarness = () => {
+      const [selectedId, setSelectedId] = useState<number | null>(2)
+
+      return (
+        <ResultsList
+          results={[createResult(1, 'First item', null), createResult(2, 'Second item', null), createResult(3, 'Third item', null)]}
+          selectedResultId={selectedId}
+          onSelectResult={setSelectedId}
+          isLoading={false}
+          isEmpty={false}
+          errorMessage={null}
+          emptyStateMessage="No items"
+          hiddenIrrelevantCount={0}
+          showIrrelevant={true}
+        />
+      )
+    }
+
+    render(<KeyboardHarness />)
+
+    const listbox = screen.getByRole('listbox', { name: /search results/i })
+    await user.click(listbox)
+    expect(listbox).toHaveFocus()
+    expect(listbox).toHaveAttribute('aria-activedescendant', 'results-option-2')
+
+    await user.keyboard('{ArrowDown}')
+    expect(listbox).toHaveAttribute('aria-activedescendant', 'results-option-3')
+
+    await user.keyboard('{ArrowUp}')
+    expect(listbox).toHaveAttribute('aria-activedescendant', 'results-option-2')
+
+    await user.keyboard('{Home}')
+    expect(listbox).toHaveAttribute('aria-activedescendant', 'results-option-1')
+
+    await user.keyboard('{End}')
+    expect(listbox).toHaveAttribute('aria-activedescendant', 'results-option-3')
+  })
+
+  it('keeps listbox focus after row click for deterministic keyboard flow', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <ResultsList
+        results={[createResult(1, 'Focusable row', null), createResult(2, 'Other row', null)]}
+        selectedResultId={1}
+        onSelectResult={vi.fn()}
+        isLoading={false}
+        isEmpty={false}
+        errorMessage={null}
+        emptyStateMessage="No items"
+        hiddenIrrelevantCount={0}
+        showIrrelevant={true}
+      />,
+    )
+
+    const listbox = screen.getByRole('listbox', { name: /search results/i })
+    await user.click(screen.getByRole('button', { name: /focusable row/i }))
+
+    expect(listbox).toHaveFocus()
   })
 })

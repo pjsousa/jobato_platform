@@ -6,21 +6,45 @@
   gap: 8px;
 }
 
+.results-list:focus {
+  outline: none;
+}
+
+.results-list:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent) 55%, white);
+  outline-offset: 6px;
+  border-radius: 16px;
+}
+
 .results-item {
-  width: 100%;
-  text-align: left;
   border: 1px solid var(--border);
   border-radius: 14px;
   background: #fffdf9;
+}
+
+.results-item__button {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
   padding: 10px 12px;
   cursor: pointer;
   display: grid;
   gap: 6px;
+  color: inherit;
+}
+
+.results-item__button:focus {
+  outline: none;
 }
 
 .results-item.selected {
   border-color: var(--accent);
   background: var(--accent-soft);
+}
+
+.results-list:focus-visible .results-item.selected {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 65%, white);
 }
 
 .results-item--irrelevant {

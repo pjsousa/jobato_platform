@@ -116,7 +116,7 @@ describe('ResultsPage', () => {
     renderPage('/results?view=today')
 
     expect(screen.getByRole('heading', { level: 3, name: 'Today first' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /today first/i })).toHaveClass('selected')
+    expect(screen.getByRole('option', { name: /today first/i })).toHaveClass('selected')
   })
 
   it('updates highlight and detail when selecting another row', async () => {
@@ -135,7 +135,41 @@ describe('ResultsPage', () => {
     await user.click(screen.getByRole('button', { name: /today second/i }))
 
     expect(screen.getByRole('heading', { level: 3, name: 'Today second' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /today second/i })).toHaveClass('selected')
+    expect(screen.getByRole('option', { name: /today second/i })).toHaveClass('selected')
+  })
+
+  it('moves selection with ArrowUp/ArrowDown/Home/End and keeps detail synchronized', async () => {
+    const todayResults = [
+      createResult(1, 'Today first', 'run-today'),
+      createResult(2, 'Today second', 'run-today'),
+      createResult(3, 'Today third', 'run-today'),
+    ]
+
+    mockUseResults.mockImplementation((view: 'today' | 'all-time') => ({
+      data: view === 'today' ? todayResults : [],
+      isLoading: false,
+      isFetching: false,
+      error: null,
+    }))
+
+    const user = userEvent.setup()
+    renderPage('/results?view=today')
+
+    const listbox = screen.getByRole('listbox', { name: /search results/i })
+    await user.click(listbox)
+
+    await user.keyboard('{ArrowDown}')
+    expect(screen.getByRole('heading', { level: 3, name: 'Today second' })).toBeInTheDocument()
+
+    await user.keyboard('{End}')
+    expect(screen.getByRole('heading', { level: 3, name: 'Today third' })).toBeInTheDocument()
+
+    await user.keyboard('{Home}')
+    expect(screen.getByRole('heading', { level: 3, name: 'Today first' })).toBeInTheDocument()
+
+    await user.keyboard('{ArrowUp}')
+    expect(screen.getByRole('heading', { level: 3, name: 'Today first' })).toBeInTheDocument()
+    expect(listbox).toHaveAttribute('aria-activedescendant', 'results-option-1')
   })
 
   it('preserves selected result when it exists in the next query result set', async () => {
@@ -344,7 +378,7 @@ describe('ResultsPage', () => {
     rerender(<RouterProvider router={router} />)
 
     expect(screen.getByRole('heading', { level: 3, name: 'Selected stays' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /selected stays/i })).toHaveClass('selected')
+    expect(screen.getByRole('option', { name: /selected stays/i })).toHaveClass('selected')
   })
 
   it('renders required list metadata and only shows duplicate badge for positive counts', () => {
@@ -513,6 +547,47 @@ describe('ResultsPage', () => {
     renderPage('/results?view=today&showIrrelevant=true')
     expect(screen.queryByText('Relevant')).not.toBeInTheDocument()
     expect(screen.queryByText('Irrelevant')).not.toBeInTheDocument()
+  })
+
+  it('announces manual label updates when title is activated with keyboard', async () => {
+    let todayResults = [createResult(1, 'Announce me', 'run-today', { manualLabel: null })]
+    const mutate = vi.fn(({ resultId, label }: { resultId: number; label: 'relevant' | 'irrelevant' | null }) => {
+      todayResults = todayResults.map((item) => (item.id === resultId ? { ...item, manualLabel: label } : item))
+    })
+
+    mockUseFeedback.mockReturnValue({
+      mutate,
+      isPending: false,
+      isError: false,
+      error: null,
+    })
+
+    mockUseResults.mockImplementation(() => ({
+      data: todayResults,
+      isLoading: false,
+      isFetching: false,
+      error: null,
+    }))
+
+    const user = userEvent.setup()
+    renderPage('/results?view=today&showIrrelevant=true')
+
+    const titleButton = screen.getByRole('button', { name: /cycle manual feedback label/i })
+    titleButton.focus()
+
+    await user.keyboard('{Enter}')
+    expect(mutate).toHaveBeenNthCalledWith(1, { resultId: 1, label: 'relevant' })
+    await waitFor(() => {
+      expect(screen.getByText('Manual label for Announce me set to Relevant.')).toBeInTheDocument()
+    })
+
+    const updatedTitleButton = screen.getByRole('button', { name: /cycle manual feedback label/i })
+    updatedTitleButton.focus()
+    await user.keyboard('{Space}')
+    expect(mutate).toHaveBeenNthCalledWith(2, { resultId: 1, label: 'irrelevant' })
+    await waitFor(() => {
+      expect(screen.getByText('Manual label for Announce me set to Irrelevant.')).toBeInTheDocument()
+    })
   })
 
   it('blocks additional title cycles while feedback mutation is pending', async () => {

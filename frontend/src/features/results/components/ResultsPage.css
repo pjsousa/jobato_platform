@@ -94,6 +94,18 @@
   border: 1px solid #e7b3a4;
 }
 
+.results-live-region {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 @media (min-width: 1024px) {
   .results-grid {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

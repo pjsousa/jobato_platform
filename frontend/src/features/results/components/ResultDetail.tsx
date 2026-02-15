@@ -1,3 +1,5 @@
+import type { KeyboardEvent } from 'react'
+
 import type { ResultDisplayRecord } from '../api/results-api'
 import './ResultDetail.css'
 
@@ -67,6 +69,12 @@ const ResultDetails = ({
   isFeedbackPending: boolean
 }) => {
   const manualLabel = getManualLabelDisplay(item.manualLabel)
+  const handleTitleKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === 'Enter' || event.key === ' ' || event.key === 'Space' || event.key === 'Spacebar') {
+      event.preventDefault()
+      onCycleManualLabel()
+    }
+  }
 
   return (
     <div className={`result-details${item.manualLabel === 'irrelevant' ? ' result-details--irrelevant' : ''}`}>
@@ -75,6 +83,7 @@ const ResultDetails = ({
           type="button"
           className="result-details__title-button"
           onClick={onCycleManualLabel}
+          onKeyDown={handleTitleKeyDown}
           disabled={isFeedbackPending}
           aria-label="Cycle manual feedback label"
         >
