@@ -46,9 +46,9 @@ WORKFLOW:
 4) Return AC -> evidence mapping and remaining risks.
 
 GATE COMMANDS (must pass before done):
-1) RUN_ID=$(curl -s -X POST http://localhost:8080/api/runs | python3 -c 'import sys,json; print(json.load(sys.stdin)["runId"])')
+1) RUN_ID=$(curl -s -X POST http://localhost:18080/api/runs | python3 -c 'import sys,json; print(json.load(sys.stdin)["runId"])')
 2) Poll /api/runs/$RUN_ID until status != running
-3) curl -i http://localhost:8080/api/reports/runs/latest
+3) curl -i http://localhost:18080/api/reports/runs/latest
 4) sqlite3 data/db/runs/active.db "SELECT run_id,status,duration_ms,new_jobs_count,relevant_count FROM run_summaries ORDER BY trigger_time DESC LIMIT 1;"
 5) Run story tests (API/ML/frontend)
 

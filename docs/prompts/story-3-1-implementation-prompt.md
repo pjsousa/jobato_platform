@@ -39,7 +39,7 @@ WORKFLOW:
 
 GATE COMMANDS:
 1) PYTHONPATH=ml python3 -m pytest ml/tests/test_url_normalization.py ml/tests/test_ingestion.py
-2) RUN_ID=$(curl -s -X POST http://localhost:8080/api/runs | python3 -c 'import sys,json; print(json.load(sys.stdin)["runId"])')
+2) RUN_ID=$(curl -s -X POST http://localhost:18080/api/runs | python3 -c 'import sys,json; print(json.load(sys.stdin)["runId"])')
 3) Poll /api/runs/$RUN_ID until terminal
 4) sqlite3 "data/db/runs/${RUN_ID}.db" "PRAGMA table_info(run_items);"
 5) sqlite3 "data/db/runs/${RUN_ID}.db" "SELECT COUNT(*) FROM run_items WHERE normalized_url IS NOT NULL;"

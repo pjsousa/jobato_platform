@@ -44,9 +44,9 @@ WORKFLOW:
 GATE COMMANDS:
 1) PYTHONPATH=ml python3 -m pytest ml/tests/test_model_activation.py ml/tests/test_model_selector.py
 2) ./gradlew test --tests "com.jobato.api.controller.MlModelControllerTest" --tests "com.jobato.api.service.MlModelClientTest"
-3) curl -i http://localhost:8080/api/ml/models/comparisons
-4) curl -i -X POST http://localhost:8080/api/ml/models/<modelId>/activate
-5) curl -i http://localhost:8080/api/ml/models/active
+3) curl -i http://localhost:18080/api/ml/models/comparisons
+4) curl -i -X POST http://localhost:18080/api/ml/models/<modelId>/activate
+5) curl -i http://localhost:18080/api/ml/models/active
 
 PASS CRITERIA:
 - Activation tests pass.

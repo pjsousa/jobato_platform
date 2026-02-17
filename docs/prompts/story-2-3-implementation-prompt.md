@@ -47,7 +47,7 @@ WORKFLOW:
 
 GATE COMMANDS (must pass before done):
 1) docker compose up -d --build
-2) RUN_ID=$(curl -s -X POST http://localhost:8080/api/runs | python3 -c 'import sys,json; print(json.load(sys.stdin)["runId"])')
+2) RUN_ID=$(curl -s -X POST http://localhost:18080/api/runs | python3 -c 'import sys,json; print(json.load(sys.stdin)["runId"])')
 3) Poll /api/runs/$RUN_ID until status != running
 4) sqlite3 "data/db/runs/${RUN_ID}.db" "SELECT COUNT(*) FROM run_items WHERE run_id='${RUN_ID}';"
 5) docker compose exec redis redis-cli XREVRANGE ml:run-events + - COUNT 20

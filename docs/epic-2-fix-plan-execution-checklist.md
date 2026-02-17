@@ -25,13 +25,13 @@ docker compose up -d --build
 - [ ] API health is up:
 
 ```bash
-curl -i http://localhost:8080/api/health
+curl -i http://localhost:18080/api/health
 ```
 
 - [ ] ML health is up:
 
 ```bash
-curl -i http://localhost:8000/health
+curl -i http://localhost:18000/health
 ```
 
 - [ ] Pre-gate ML test path works:
@@ -59,11 +59,11 @@ PYTHONPATH=ml python3 -m pytest ml/tests/test_run_pipeline.py
 ### Gate 2.3 commands
 
 ```bash
-RUN_ID=$(curl -s -X POST http://localhost:8080/api/runs | python3 -c 'import sys,json; print(json.load(sys.stdin)["runId"])')
+RUN_ID=$(curl -s -X POST http://localhost:18080/api/runs | python3 -c 'import sys,json; print(json.load(sys.stdin)["runId"])')
 echo "$RUN_ID"
 
 for i in {1..30}; do
-  STATUS=$(curl -s "http://localhost:8080/api/runs/$RUN_ID" | python3 -c 'import sys,json; print(json.load(sys.stdin)["status"])')
+  STATUS=$(curl -s "http://localhost:18080/api/runs/$RUN_ID" | python3 -c 'import sys,json; print(json.load(sys.stdin)["status"])')
   echo "$STATUS"
   [ "$STATUS" != "running" ] && break
   sleep 2
@@ -101,15 +101,15 @@ Note: this gate creates a temporary unique query to avoid false failures when re
 
 ```bash
 GATE_QUERY="gate-2-4-html-$(date +%s)-$RANDOM"
-QUERY_JSON=$(curl -s -X POST http://localhost:8080/api/queries \
+QUERY_JSON=$(curl -s -X POST http://localhost:18080/api/queries \
   -H "Content-Type: application/json" \
   -d "{\"text\":\"${GATE_QUERY}\"}")
 QUERY_ID=$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["id"])' "$QUERY_JSON")
 
-RUN_ID=$(curl -s -X POST http://localhost:8080/api/runs | python3 -c 'import sys,json; print(json.load(sys.stdin)["runId"])')
+RUN_ID=$(curl -s -X POST http://localhost:18080/api/runs | python3 -c 'import sys,json; print(json.load(sys.stdin)["runId"])')
 
 for i in {1..30}; do
-  STATUS=$(curl -s "http://localhost:8080/api/runs/$RUN_ID" | python3 -c 'import sys,json; print(json.load(sys.stdin)["status"])')
+  STATUS=$(curl -s "http://localhost:18080/api/runs/$RUN_ID" | python3 -c 'import sys,json; print(json.load(sys.stdin)["status"])')
   [ "$STATUS" != "running" ] && break
   sleep 2
 done
@@ -124,7 +124,7 @@ test -f "$HTML_PATH" && echo "OK"
 PYTHONPATH=ml python3 -m pytest ml/tests/test_html_services.py ml/tests/test_ingestion_html_integration.py
 
 # cleanup: disable temporary gate query
-curl -s -X PATCH "http://localhost:8080/api/queries/${QUERY_ID}" \
+curl -s -X PATCH "http://localhost:18080/api/queries/${QUERY_ID}" \
   -H "Content-Type: application/json" \
   -d '{"enabled":false}' >/dev/null
 ```
@@ -155,17 +155,17 @@ curl -s -X PATCH "http://localhost:8080/api/queries/${QUERY_ID}" \
 
 ```bash
 # Run A
-RUN_A=$(curl -s -X POST http://localhost:8080/api/runs | python3 -c 'import sys,json; print(json.load(sys.stdin)["runId"])')
+RUN_A=$(curl -s -X POST http://localhost:18080/api/runs | python3 -c 'import sys,json; print(json.load(sys.stdin)["runId"])')
 for i in {1..30}; do
-  STATUS=$(curl -s "http://localhost:8080/api/runs/$RUN_A" | python3 -c 'import sys,json; print(json.load(sys.stdin)["status"])')
+  STATUS=$(curl -s "http://localhost:18080/api/runs/$RUN_A" | python3 -c 'import sys,json; print(json.load(sys.stdin)["status"])')
   [ "$STATUS" != "running" ] && break
   sleep 2
 done
 
 # Run B (same inputs, within TTL)
-RUN_B=$(curl -s -X POST http://localhost:8080/api/runs | python3 -c 'import sys,json; print(json.load(sys.stdin)["runId"])')
+RUN_B=$(curl -s -X POST http://localhost:18080/api/runs | python3 -c 'import sys,json; print(json.load(sys.stdin)["runId"])')
 for i in {1..30}; do
-  STATUS=$(curl -s "http://localhost:8080/api/runs/$RUN_B" | python3 -c 'import sys,json; print(json.load(sys.stdin)["status"])')
+  STATUS=$(curl -s "http://localhost:18080/api/runs/$RUN_B" | python3 -c 'import sys,json; print(json.load(sys.stdin)["status"])')
   [ "$STATUS" != "running" ] && break
   sleep 2
 done
@@ -199,14 +199,14 @@ PYTHONPATH=ml python3 -m pytest ml/tests/test_cache*.py
 ### Gate 2.6 commands
 
 ```bash
-RUN_ID=$(curl -s -X POST http://localhost:8080/api/runs | python3 -c 'import sys,json; print(json.load(sys.stdin)["runId"])')
+RUN_ID=$(curl -s -X POST http://localhost:18080/api/runs | python3 -c 'import sys,json; print(json.load(sys.stdin)["runId"])')
 for i in {1..30}; do
-  STATUS=$(curl -s "http://localhost:8080/api/runs/$RUN_ID" | python3 -c 'import sys,json; print(json.load(sys.stdin)["status"])')
+  STATUS=$(curl -s "http://localhost:18080/api/runs/$RUN_ID" | python3 -c 'import sys,json; print(json.load(sys.stdin)["status"])')
   [ "$STATUS" != "running" ] && break
   sleep 2
 done
 
-curl -i http://localhost:8080/api/reports/runs/latest
+curl -i http://localhost:18080/api/reports/runs/latest
 sqlite3 data/db/runs/active.db "SELECT run_id,status,duration_ms,new_jobs_count,relevant_count FROM run_summaries ORDER BY trigger_time DESC LIMIT 1;"
 ```
 

@@ -41,9 +41,9 @@ WORKFLOW:
 
 GATE COMMANDS:
 1) PYTHONPATH=ml python3 -m pytest ml/tests/test_evaluation_worker.py ml/tests/test_metrics.py ml/tests/test_evaluation_pipeline.py
-2) curl -i -X POST http://localhost:8080/api/ml/evaluations
-3) curl -i http://localhost:8080/api/ml/evaluations/<evaluationId>
-4) curl -i http://localhost:8080/api/ml/evaluations/<evaluationId>/results
+2) curl -i -X POST http://localhost:18080/api/ml/evaluations
+3) curl -i http://localhost:18080/api/ml/evaluations/<evaluationId>
+4) curl -i http://localhost:18080/api/ml/evaluations/<evaluationId>/results
 
 PASS CRITERIA:
 - Evaluation tests pass.

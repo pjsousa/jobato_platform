@@ -41,8 +41,8 @@ WORKFLOW:
 
 GATE COMMANDS:
 1) PYTHONPATH=ml python3 -m pytest ml/tests/test_model_interface.py ml/tests/test_registry.py
-2) curl -i http://localhost:8000/health
-3) curl -i http://localhost:8000/ml/models
+2) curl -i http://localhost:18000/health
+3) curl -i http://localhost:18000/ml/models
 
 PASS CRITERIA:
 - Registry/interface tests pass.

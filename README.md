@@ -28,8 +28,8 @@ Jobato is a daily, personalized job discovery tool for senior and lead software 
 Service endpoints:
 
 - Frontend: http://localhost:5173
-- API: http://localhost:8080/api
-- ML: http://localhost:8000
+- API: http://localhost:18080/api
+- ML: http://localhost:18000
 - Redis: localhost:6379
 
 To stop services:
@@ -141,13 +141,13 @@ The ML service scores job postings for relevance and manages model training and 
 List queries:
 
 ```bash
-curl http://localhost:8080/api/queries
+curl http://localhost:18080/api/queries
 ```
 
 Create a query:
 
 ```bash
-curl -X POST http://localhost:8080/api/queries \
+curl -X POST http://localhost:18080/api/queries \
   -H "Content-Type: application/json" \
   -d '{"text":"site:greenhouse.io \"senior backend\" remote"}'
 ```
@@ -155,7 +155,7 @@ curl -X POST http://localhost:8080/api/queries \
 Update a query:
 
 ```bash
-curl -X PATCH http://localhost:8080/api/queries/<id> \
+curl -X PATCH http://localhost:18080/api/queries/<id> \
   -H "Content-Type: application/json" \
   -d '{"enabled":false}'
 ```
@@ -163,13 +163,13 @@ curl -X PATCH http://localhost:8080/api/queries/<id> \
 List allowlisted domains:
 
 ```bash
-curl http://localhost:8080/api/allowlists
+curl http://localhost:18080/api/allowlists
 ```
 
 Add an allowlisted domain:
 
 ```bash
-curl -X POST http://localhost:8080/api/allowlists \
+curl -X POST http://localhost:18080/api/allowlists \
   -H "Content-Type: application/json" \
   -d '{"domain":"example.com"}'
 ```
@@ -177,7 +177,7 @@ curl -X POST http://localhost:8080/api/allowlists \
 Update an allowlisted domain:
 
 ```bash
-curl -X PATCH http://localhost:8080/api/allowlists/example.com \
+curl -X PATCH http://localhost:18080/api/allowlists/example.com \
   -H "Content-Type: application/json" \
   -d '{"enabled":false}'
 ```
@@ -189,5 +189,5 @@ If your environment enforces API keys, add `-H "X-Jobato-Api-Key: <value>"` to t
 Health check:
 
 ```bash
-curl http://localhost:8000/health
+curl http://localhost:18000/health
 ```

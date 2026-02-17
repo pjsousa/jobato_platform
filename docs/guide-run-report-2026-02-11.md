@@ -21,8 +21,8 @@ Source: `GUIDE.md`
 Status: ✅ Pass
 
 - `docker compose ps` showed all four services up.
-- `curl http://localhost:8080/api/health` returned HTTP 200 (`{"status":"UP"}`).
-- `curl http://localhost:8000/health` returned HTTP 200 (`{"status":"ok","redis":"ok"}`).
+- `curl http://localhost:18080/api/health` returned HTTP 200 (`{"status":"UP"}`).
+- `curl http://localhost:18000/health` returned HTTP 200 (`{"status":"ok","redis":"ok"}`).
 
 ### Story 1.2 - Manage query strings
 

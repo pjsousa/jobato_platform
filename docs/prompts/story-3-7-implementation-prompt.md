@@ -45,9 +45,9 @@ WORKFLOW:
 GATE COMMANDS:
 1) PYTHONPATH=ml python3 -m pytest ml/tests/test_retrain_scheduler.py ml/tests/test_retrain_pipeline.py ml/tests/test_retrain_no_labels.py
 2) ./gradlew test --tests "com.jobato.api.controller.RetrainControllerTest"
-3) curl -i -X POST http://localhost:8080/api/ml/retrain/trigger
-4) curl -i http://localhost:8080/api/ml/retrain/status
-5) curl -i http://localhost:8080/api/ml/retrain/history
+3) curl -i -X POST http://localhost:18080/api/ml/retrain/trigger
+4) curl -i http://localhost:18080/api/ml/retrain/status
+5) curl -i http://localhost:18080/api/ml/retrain/history
 
 PASS CRITERIA:
 - Retrain tests pass.

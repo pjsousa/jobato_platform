@@ -22,7 +22,7 @@ export class ApiError extends Error {
   }
 }
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api').replace(/\/$/, '')
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:18080/api').replace(/\/$/, '')
 const baseUrl = `${API_BASE_URL}/runs`
 
 const parseProblem = async (response: Response): Promise<ApiProblem | undefined> => {

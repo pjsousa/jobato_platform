@@ -48,15 +48,15 @@ GATE COMMANDS (must pass before done):
 
 ```bash
 GATE_QUERY="gate-2-4-html-$(date +%s)-$RANDOM"
-QUERY_JSON=$(curl -s -X POST http://localhost:8080/api/queries \
+QUERY_JSON=$(curl -s -X POST http://localhost:18080/api/queries \
   -H "Content-Type: application/json" \
   -d "{\"text\":\"${GATE_QUERY}\"}")
 QUERY_ID=$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["id"])' "$QUERY_JSON")
 
-RUN_ID=$(curl -s -X POST http://localhost:8080/api/runs | python3 -c 'import sys,json; print(json.load(sys.stdin)["runId"])')
+RUN_ID=$(curl -s -X POST http://localhost:18080/api/runs | python3 -c 'import sys,json; print(json.load(sys.stdin)["runId"])')
 
 for i in {1..30}; do
-  STATUS=$(curl -s "http://localhost:8080/api/runs/$RUN_ID" | python3 -c 'import sys,json; print(json.load(sys.stdin)["status"])')
+  STATUS=$(curl -s "http://localhost:18080/api/runs/$RUN_ID" | python3 -c 'import sys,json; print(json.load(sys.stdin)["status"])')
   [ "$STATUS" != "running" ] && break
   sleep 2
 done
@@ -71,7 +71,7 @@ test -f "$HTML_PATH" && echo "OK"
 PYTHONPATH=ml python3 -m pytest ml/tests/test_html_services.py ml/tests/test_ingestion_html_integration.py
 
 # cleanup: disable temporary gate query
-curl -s -X PATCH "http://localhost:8080/api/queries/${QUERY_ID}" \
+curl -s -X PATCH "http://localhost:18080/api/queries/${QUERY_ID}" \
   -H "Content-Type: application/json" \
   -d '{"enabled":false}' >/dev/null
 ```

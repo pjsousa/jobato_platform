@@ -25,14 +25,14 @@ docker compose up --build
 
 3. Verify endpoints:
 - Frontend: http://localhost:5173
-- API: http://localhost:8080/api
-- ML: http://localhost:8000
+- API: http://localhost:18080/api
+- ML: http://localhost:18000
 - Redis: localhost:6379
 
 4. Health checks:
 ```bash
-curl http://localhost:8080/api/health
-curl http://localhost:8000/health
+curl http://localhost:18080/api/health
+curl http://localhost:18000/health
 ```
 
 If your environment enforces API keys, add:
@@ -62,33 +62,33 @@ docker compose ps
 
 1. List queries:
 ```bash
-curl http://localhost:8080/api/queries
+curl http://localhost:18080/api/queries
 ```
 
 2. Create a query:
 ```bash
-curl -X POST http://localhost:8080/api/queries \
+curl -X POST http://localhost:18080/api/queries \
   -H "Content-Type: application/json" \
   -d '{"text":"senior backend remote"}'
 ```
 
 3. Edit a query (replace `<id>` with the returned id):
 ```bash
-curl -X PATCH http://localhost:8080/api/queries/<id> \
+curl -X PATCH http://localhost:18080/api/queries/<id> \
   -H "Content-Type: application/json" \
   -d '{"text":"staff backend remote"}'
 ```
 
 4. Disable a query:
 ```bash
-curl -X PATCH http://localhost:8080/api/queries/<id> \
+curl -X PATCH http://localhost:18080/api/queries/<id> \
   -H "Content-Type: application/json" \
   -d '{"enabled":false}'
 ```
 
 5. Duplicate check (should return RFC 7807 error):
 ```bash
-curl -X POST http://localhost:8080/api/queries \
+curl -X POST http://localhost:18080/api/queries \
   -H "Content-Type: application/json" \
   -d '{"text":"staff backend remote"}'
 ```
@@ -100,26 +100,26 @@ Persisted config is written to:
 
 1. List allowlists:
 ```bash
-curl http://localhost:8080/api/allowlists
+curl http://localhost:18080/api/allowlists
 ```
 
 2. Add a domain:
 ```bash
-curl -X POST http://localhost:8080/api/allowlists \
+curl -X POST http://localhost:18080/api/allowlists \
   -H "Content-Type: application/json" \
   -d '{"domain":"example.com"}'
 ```
 
 3. Disable a domain:
 ```bash
-curl -X PATCH http://localhost:8080/api/allowlists/example.com \
+curl -X PATCH http://localhost:18080/api/allowlists/example.com \
   -H "Content-Type: application/json" \
   -d '{"enabled":false}'
 ```
 
 4. Invalid domain (should return RFC 7807 error):
 ```bash
-curl -X POST http://localhost:8080/api/allowlists \
+curl -X POST http://localhost:18080/api/allowlists \
   -H "Content-Type: application/json" \
   -d '{"domain":"https://bad.example.com/path"}'
 ```
@@ -143,12 +143,12 @@ There is no public HTTP endpoint for combinations; they are generated when you c
 
 1. Trigger a run:
 ```bash
-curl -X POST http://localhost:8080/api/runs
+curl -X POST http://localhost:18080/api/runs
 ```
 
 2. Fetch the run status (replace `<runId>`):
 ```bash
-curl http://localhost:8080/api/runs/<runId>
+curl http://localhost:18080/api/runs/<runId>
 ```
 
 3. Inspect the latest `run.requested` event in Redis:
@@ -158,7 +158,7 @@ docker compose exec redis redis-cli XREVRANGE ml:run-events + - COUNT 1
 
 4. While the run is still `running`, a second trigger should be rejected:
 ```bash
-curl -X POST http://localhost:8080/api/runs
+curl -X POST http://localhost:18080/api/runs
 ```
 
 Expected error code: `RUN_IN_PROGRESS`.
@@ -172,7 +172,7 @@ docker compose exec redis redis-cli XADD ml:run-events * eventId "$EVENT_ID" eve
 
 6. Re-check the run status:
 ```bash
-curl http://localhost:8080/api/runs/<runId>
+curl http://localhost:18080/api/runs/<runId>
 ```
 
 ### Story 2.2: Quota and Concurrency Enforcement
@@ -186,7 +186,7 @@ sqlite3 data/db/quota/quota.db "CREATE TABLE IF NOT EXISTS quota_usage (day TEXT
 
 3. Trigger a run and expect `QUOTA_REACHED`:
 ```bash
-curl -X POST http://localhost:8080/api/runs
+curl -X POST http://localhost:18080/api/runs
 ```
 
 4. To validate ML concurrency and quota logic (requires ML deps installed):
@@ -224,7 +224,7 @@ sqlite3 data/db/runs/<runId>.db "SELECT raw_html_path, visible_text FROM run_ite
 
 1. Fetch the latest run summary:
 ```bash
-curl -i http://localhost:8080/api/reports/runs/latest
+curl -i http://localhost:18080/api/reports/runs/latest
 ```
 
 2. Zero-result queries should be logged by the ML worker; check ML logs when a query/domain returns zero results.
@@ -239,9 +239,9 @@ Until a given story is merged, that step may return `404` or missing-field respo
 1. Start services and verify health:
 ```bash
 docker compose up -d --build
-curl -i http://localhost:8080/api/health
-curl -i http://localhost:8000/health
-curl -i http://localhost:8080/api/reports/runs/latest
+curl -i http://localhost:18080/api/health
+curl -i http://localhost:18000/health
+curl -i http://localhost:18080/api/reports/runs/latest
 PYTHONPATH=ml python3 -m pytest ml/tests/test_ingestion.py
 ```
 
@@ -253,9 +253,9 @@ PYTHONPATH=ml python3 -m pytest ml/tests/test_url_normalization.py ml/tests/test
 ```
 2. Trigger a run and wait for completion:
 ```bash
-RUN_ID=$(curl -s -X POST http://localhost:8080/api/runs | python3 -c 'import sys,json; print(json.load(sys.stdin)["runId"])')
+RUN_ID=$(curl -s -X POST http://localhost:18080/api/runs | python3 -c 'import sys,json; print(json.load(sys.stdin)["runId"])')
 for i in {1..30}; do
-  STATUS=$(curl -s "http://localhost:8080/api/runs/$RUN_ID" | python3 -c 'import sys,json; print(json.load(sys.stdin)["status"])')
+  STATUS=$(curl -s "http://localhost:18080/api/runs/$RUN_ID" | python3 -c 'import sys,json; print(json.load(sys.stdin)["status"])')
   [ "$STATUS" != "running" ] && break
   sleep 0
 done
@@ -301,8 +301,8 @@ PYTHONPATH=ml python3 -m pytest ml/tests/test_model_interface.py ml/tests/test_r
 ```
 2. Verify ML model discovery endpoints:
 ```bash
-curl -i http://localhost:8000/health
-curl -i http://localhost:8000/ml/models
+curl -i http://localhost:18000/health
+curl -i http://localhost:18000/ml/models
 ```
 
 ### Step 5: Parallel candidate evaluation (Story 3.5)
@@ -313,9 +313,9 @@ PYTHONPATH=ml python3 -m pytest ml/tests/test_evaluation_worker.py ml/tests/test
 ```
 2. Trigger evaluation and inspect status/results:
 ```bash
-curl -i -X POST http://localhost:8080/api/ml/evaluations
-curl -i http://localhost:8080/api/ml/evaluations/<evaluationId>
-curl -i http://localhost:8080/api/ml/evaluations/<evaluationId>/results
+curl -i -X POST http://localhost:18080/api/ml/evaluations
+curl -i http://localhost:18080/api/ml/evaluations/<evaluationId>
+curl -i http://localhost:18080/api/ml/evaluations/<evaluationId>/results
 ```
 
 ### Step 6: Model comparison, activation, and rollback path (Story 3.6)
@@ -327,9 +327,9 @@ PYTHONPATH=ml python3 -m pytest ml/tests/test_model_activation.py ml/tests/test_
 ```
 2. Compare candidates and activate a model:
 ```bash
-curl -i http://localhost:8080/api/ml/models/comparisons
-curl -i -X POST http://localhost:8080/api/ml/models/<modelId>/activate
-curl -i http://localhost:8080/api/ml/models/active
+curl -i http://localhost:18080/api/ml/models/comparisons
+curl -i -X POST http://localhost:18080/api/ml/models/<modelId>/activate
+curl -i http://localhost:18080/api/ml/models/active
 ```
 
 ### Step 7: Daily retrain and manual retrain operations (Story 3.7)
@@ -341,9 +341,9 @@ PYTHONPATH=ml python3 -m pytest ml/tests/test_retrain_scheduler.py ml/tests/test
 ```
 2. Trigger retrain and inspect status/history:
 ```bash
-curl -i -X POST http://localhost:8080/api/ml/retrain/trigger
-curl -i http://localhost:8080/api/ml/retrain/status
-curl -i http://localhost:8080/api/ml/retrain/history
+curl -i -X POST http://localhost:18080/api/ml/retrain/trigger
+curl -i http://localhost:18080/api/ml/retrain/status
+curl -i http://localhost:18080/api/ml/retrain/history
 ```
 
 ## Disclaimer

@@ -37,9 +37,9 @@ Ensure Epic 2 runtime is stable and baseline tooling supports Epic 3 work.
 
 ```bash
 docker compose up -d --build
-curl -i http://localhost:8080/api/health
-curl -i http://localhost:8000/health
-curl -i http://localhost:8080/api/reports/runs/latest
+curl -i http://localhost:18080/api/health
+curl -i http://localhost:18000/health
+curl -i http://localhost:18080/api/reports/runs/latest
 PYTHONPATH=ml python3 -m pytest ml/tests/test_ingestion.py
 ```
 
@@ -69,9 +69,9 @@ Generate deterministic normalized URL keys and store them for dedupe usage.
 ```bash
 PYTHONPATH=ml python3 -m pytest ml/tests/test_url_normalization.py ml/tests/test_ingestion.py
 
-RUN_ID=$(curl -s -X POST http://localhost:8080/api/runs | python3 -c 'import sys,json; print(json.load(sys.stdin)["runId"])')
+RUN_ID=$(curl -s -X POST http://localhost:18080/api/runs | python3 -c 'import sys,json; print(json.load(sys.stdin)["runId"])')
 for i in {1..30}; do
-  STATUS=$(curl -s "http://localhost:8080/api/runs/$RUN_ID" | python3 -c 'import sys,json; print(json.load(sys.stdin)["status"])')
+  STATUS=$(curl -s "http://localhost:18080/api/runs/$RUN_ID" | python3 -c 'import sys,json; print(json.load(sys.stdin)["status"])')
   [ "$STATUS" != "running" ] && break
   sleep 2
 done
@@ -106,9 +106,9 @@ Link exact and near duplicates to canonical records and hide duplicates by defau
 PYTHONPATH=ml python3 -m pytest ml/tests/test_dedupe.py ml/tests/test_ingestion_dedupe.py
 ./gradlew test --tests "com.jobato.api.controller.ResultsControllerTest" --tests "com.jobato.api.service.ResultServiceTest"
 
-RUN_ID=$(curl -s -X POST http://localhost:8080/api/runs | python3 -c 'import sys,json; print(json.load(sys.stdin)["runId"])')
+RUN_ID=$(curl -s -X POST http://localhost:18080/api/runs | python3 -c 'import sys,json; print(json.load(sys.stdin)["runId"])')
 for i in {1..30}; do
-  STATUS=$(curl -s "http://localhost:8080/api/runs/$RUN_ID" | python3 -c 'import sys,json; print(json.load(sys.stdin)["status"])')
+  STATUS=$(curl -s "http://localhost:18080/api/runs/$RUN_ID" | python3 -c 'import sys,json; print(json.load(sys.stdin)["status"])')
   [ "$STATUS" != "running" ] && break
   sleep 2
 done
@@ -144,9 +144,9 @@ Store baseline relevance scores and expose score fields for retrieval/sorting.
 PYTHONPATH=ml python3 -m pytest ml/tests/test_scoring.py ml/tests/test_ingestion_scoring.py
 ./gradlew test --tests "com.jobato.api.controller.ResultsControllerTest" --tests "com.jobato.api.service.ResultServiceTest"
 
-RUN_ID=$(curl -s -X POST http://localhost:8080/api/runs | python3 -c 'import sys,json; print(json.load(sys.stdin)["runId"])')
+RUN_ID=$(curl -s -X POST http://localhost:18080/api/runs | python3 -c 'import sys,json; print(json.load(sys.stdin)["runId"])')
 for i in {1..30}; do
-  STATUS=$(curl -s "http://localhost:8080/api/runs/$RUN_ID" | python3 -c 'import sys,json; print(json.load(sys.stdin)["status"])')
+  STATUS=$(curl -s "http://localhost:18080/api/runs/$RUN_ID" | python3 -c 'import sys,json; print(json.load(sys.stdin)["status"])')
   [ "$STATUS" != "running" ] && break
   sleep 2
 done
@@ -181,8 +181,8 @@ Load model plugins via registry and expose available models safely.
 ```bash
 PYTHONPATH=ml python3 -m pytest ml/tests/test_model_interface.py ml/tests/test_registry.py
 
-curl -i http://localhost:8000/health
-curl -i http://localhost:8000/ml/models
+curl -i http://localhost:18000/health
+curl -i http://localhost:18000/ml/models
 ```
 
 ### Pass criteria
@@ -211,9 +211,9 @@ Run evaluation jobs for all candidate models with bounded concurrency and stored
 ```bash
 PYTHONPATH=ml python3 -m pytest ml/tests/test_evaluation_worker.py ml/tests/test_metrics.py ml/tests/test_evaluation_pipeline.py
 
-curl -i -X POST http://localhost:8080/api/ml/evaluations
-curl -i http://localhost:8080/api/ml/evaluations/<evaluationId>
-curl -i http://localhost:8080/api/ml/evaluations/<evaluationId>/results
+curl -i -X POST http://localhost:18080/api/ml/evaluations
+curl -i http://localhost:18080/api/ml/evaluations/<evaluationId>
+curl -i http://localhost:18080/api/ml/evaluations/<evaluationId>/results
 ```
 
 ### Pass criteria
@@ -243,9 +243,9 @@ Compare candidates, activate one model, and support rollback.
 PYTHONPATH=ml python3 -m pytest ml/tests/test_model_activation.py ml/tests/test_model_selector.py
 ./gradlew test --tests "com.jobato.api.controller.MlModelControllerTest" --tests "com.jobato.api.service.MlModelClientTest"
 
-curl -i http://localhost:8080/api/ml/models/comparisons
-curl -i -X POST http://localhost:8080/api/ml/models/<modelId>/activate
-curl -i http://localhost:8080/api/ml/models/active
+curl -i http://localhost:18080/api/ml/models/comparisons
+curl -i -X POST http://localhost:18080/api/ml/models/<modelId>/activate
+curl -i http://localhost:18080/api/ml/models/active
 ```
 
 ### Pass criteria
@@ -280,9 +280,9 @@ Schedule/trigger retraining, create new model versions, and promote safely.
 PYTHONPATH=ml python3 -m pytest ml/tests/test_retrain_scheduler.py ml/tests/test_retrain_pipeline.py ml/tests/test_retrain_no_labels.py
 ./gradlew test --tests "com.jobato.api.controller.RetrainControllerTest"
 
-curl -i -X POST http://localhost:8080/api/ml/retrain/trigger
-curl -i http://localhost:8080/api/ml/retrain/status
-curl -i http://localhost:8080/api/ml/retrain/history
+curl -i -X POST http://localhost:18080/api/ml/retrain/trigger
+curl -i http://localhost:18080/api/ml/retrain/status
+curl -i http://localhost:18080/api/ml/retrain/history
 ```
 
 ### Pass criteria
