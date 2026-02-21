@@ -6,6 +6,7 @@ import json
 import logging
 import os
 from pathlib import Path
+import shutil
 import threading
 import time
 from typing import Any, Mapping
@@ -36,6 +37,50 @@ REQUIRED_EVENT_FIELDS = (
     "runId",
     "payload",
 )
+DEFAULT_ACTIVE_DB = "db/runs/active.db"
+
+
+def _resolve_active_db_path(data_dir: Path) -> Path | None:
+    pointer_path = data_dir / "db" / "current-db.txt"
+    if pointer_path.exists():
+        pointer_value = pointer_path.read_text(encoding="utf-8").strip()
+        if pointer_value:
+            resolved = Path(pointer_value)
+            db_path = resolved if resolved.is_absolute() else data_dir / resolved
+            if db_path.exists():
+                return db_path
+    default_path = data_dir / DEFAULT_ACTIVE_DB
+    if default_path.exists():
+        return default_path
+    return None
+
+
+def _prepare_run_database(run_id: str, data_dir: Path, logger: logging.Logger) -> Path:
+    runs_dir = data_dir / "db" / "runs"
+    runs_dir.mkdir(parents=True, exist_ok=True)
+    new_db_path = runs_dir / f"{run_id}.db"
+
+    source_db = _resolve_active_db_path(data_dir)
+    if source_db is not None:
+        logger.info("run_worker.copy_db source=%s target=%s", source_db, new_db_path)
+        shutil.copy2(source_db, new_db_path)
+    else:
+        logger.info("run_worker.create_db target=%s", new_db_path)
+        new_db_path.parent.mkdir(parents=True, exist_ok=True)
+        new_db_path.touch()
+
+    return new_db_path
+
+
+def _update_db_pointer(new_db_path: Path, data_dir: Path, logger: logging.Logger) -> None:
+    pointer_path = data_dir / "db" / "current-db.txt"
+    relative_path = new_db_path.relative_to(data_dir)
+    pointer_path.parent.mkdir(parents=True, exist_ok=True)
+
+    temp_path = pointer_path.with_suffix(".tmp")
+    temp_path.write_text(str(relative_path), encoding="utf-8")
+    temp_path.replace(pointer_path)
+    logger.info("run_worker.pointer_updated path=%s", relative_path)
 
 
 @dataclass(frozen=True)
@@ -109,6 +154,7 @@ class RunEventsWorker:
         try:
             run_inputs = _extract_run_inputs(event.payload)
             search_client, url_resolver = _build_clients(self._search_provider, self._logger)
+            _prepare_run_database(event.run_id, self._data_dir, self._logger)
             outcome = ingest_run(
                 run_id=event.run_id,
                 run_inputs=run_inputs,
@@ -117,6 +163,8 @@ class RunEventsWorker:
                 data_dir=self._data_dir,
                 capture_html=True,
             )
+            new_db_path = self._data_dir / "db" / "runs" / f"{event.run_id}.db"
+            _update_db_pointer(new_db_path, self._data_dir, self._logger)
             self._publish_event(
                 COMPLETED_EVENT_TYPE,
                 event.run_id,
