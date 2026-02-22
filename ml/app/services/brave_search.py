@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+import gzip
 import hashlib
 import json
 import logging
+from dataclasses import dataclass
 from typing import Any, Callable
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urlparse
 from urllib.request import Request, urlopen
 
 from app.schemas.results import SearchResultItem
-
 
 BRAVE_SEARCH_URL = "https://api.search.brave.com/res/v1/web/search"
 
@@ -19,6 +19,11 @@ BRAVE_SEARCH_URL = "https://api.search.brave.com/res/v1/web/search"
 class BraveSearchConfig:
     api_key: str
     freshness: str = "pm"
+    count: int = 20
+
+    def __post_init__(self) -> None:
+        if self.count < 1 or self.count > 20:
+            raise ValueError("count must be between 1 and 20 for Brave Web Search API")
 
 
 class SearchServiceError(RuntimeError):
@@ -56,6 +61,7 @@ class BraveSearchClient:
 def _build_search_url(config: BraveSearchConfig, search_query: str) -> str:
     params = {
         "q": search_query,
+        "count": config.count,
     }
     if config.freshness:
         params["freshness"] = config.freshness
@@ -80,7 +86,10 @@ def _default_http_get(url: str) -> dict[str, Any]:
     )
     try:
         with urlopen(request, timeout=10) as response:
-            payload = response.read().decode("utf-8")
+            raw_data = response.read()
+            if response.headers.get("Content-Encoding") == "gzip":
+                raw_data = gzip.decompress(raw_data)
+            payload = raw_data.decode("utf-8")
     except HTTPError as error:
         raise SearchServiceError(f"Brave search request failed with status {error.code}") from error
     except (TimeoutError, URLError, OSError) as error:

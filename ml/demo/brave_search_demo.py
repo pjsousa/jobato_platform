@@ -27,12 +27,11 @@ def main() -> int:
         print("Get your API key at: https://brave.com/search/api/")
         return 1
 
-    config = BraveSearchConfig(api_key=api_key, freshness="pw")
+    config = BraveSearchConfig(api_key=api_key, freshness="pw", count=20)
     client = BraveSearchClient(config)
 
     queries = [
-        "site:linkedin.com/jobs software engineer remote",
-        "site:indeed.com data scientist",
+        "engineer AND remote",
     ]
 
     print("=" * 60)
@@ -48,11 +47,15 @@ def main() -> int:
             results = client.search(run_id=str(uuid.uuid4()), search_query=query)
             print(f"Found {len(results)} results:\n")
 
-            for i, result in enumerate(results[:5], 1):
+            for i, result in enumerate(results[:10], 1):
                 print(f"  [{i}] {result.title}")
                 print(f"      URL: {result.link}")
                 print(f"      Site: {result.display_link}")
-                print(f"      Snippet: {result.snippet[:100]}..." if len(result.snippet) > 100 else f"      Snippet: {result.snippet}")
+                print(
+                    f"      Snippet: {result.snippet[:100]}..."
+                    if len(result.snippet) > 100
+                    else f"      Snippet: {result.snippet}"
+                )
                 print()
 
         except SearchServiceError as e:
