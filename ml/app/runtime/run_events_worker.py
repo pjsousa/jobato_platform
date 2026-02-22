@@ -17,10 +17,10 @@ from redis.exceptions import RedisError
 from app.pipelines.ingestion import RunInput, ingest_run
 from app.schemas.events import build_run_event
 from app.services.fetcher import DeterministicMockUrlResolver, FetcherError, UrlResolver
-from app.services.google_search import (
+from app.services.brave_search import (
+    BraveSearchClient,
+    BraveSearchConfig,
     DeterministicMockSearchClient,
-    GoogleSearchClient,
-    GoogleSearchConfig,
     SearchServiceError,
 )
 
@@ -62,10 +62,14 @@ def _prepare_run_database(run_id: str, data_dir: Path, logger: logging.Logger) -
 
     source_db = _resolve_active_db_path(data_dir)
     if source_db is not None:
-        logger.info("run_worker.copy_db source=%s target=%s", source_db, new_db_path)
+        source_size = source_db.stat().st_size if source_db.exists() else 0
+        logger.info(
+            "run_worker.db_prepared run_id=%s source=%s source_size=%db target=%s",
+            run_id, source_db.name, source_size, new_db_path.name
+        )
         shutil.copy2(source_db, new_db_path)
     else:
-        logger.info("run_worker.create_db target=%s", new_db_path)
+        logger.info("run_worker.db_created run_id=%s target=%s", run_id, new_db_path.name)
         new_db_path.parent.mkdir(parents=True, exist_ok=True)
         new_db_path.touch()
 
@@ -80,7 +84,12 @@ def _update_db_pointer(new_db_path: Path, data_dir: Path, logger: logging.Logger
     temp_path = pointer_path.with_suffix(".tmp")
     temp_path.write_text(str(relative_path), encoding="utf-8")
     temp_path.replace(pointer_path)
-    logger.info("run_worker.pointer_updated path=%s", relative_path)
+    
+    db_size = new_db_path.stat().st_size if new_db_path.exists() else 0
+    logger.info(
+        "run_worker.db_pointer_updated path=%s db_size=%db",
+        str(relative_path), db_size
+    )
 
 
 @dataclass(frozen=True)
@@ -122,11 +131,16 @@ class RunEventsWorker:
         self._stop_event.clear()
         self._thread = threading.Thread(target=self._run, name="run-events-worker", daemon=True)
         self._thread.start()
+        self._logger.info(
+            "run_worker.started provider=%s stream=%s data_dir=%s",
+            self._search_provider, self._stream_key, self._data_dir
+        )
 
     def stop(self) -> None:
         self._stop_event.set()
         if self._thread is not None:
             self._thread.join(timeout=2)
+        self._logger.info("run_worker.stopped")
 
     def _run(self) -> None:
         last_id = "$"
@@ -134,7 +148,7 @@ class RunEventsWorker:
             try:
                 streams = self._redis.xread({self._stream_key: last_id}, count=10, block=1000)
             except RedisError as error:
-                self._logger.warning("run_worker.redis_read_failed error=%s", error)
+                self._logger.warning("run_worker.redis_error error=%s", error)
                 time.sleep(1)
                 continue
 
@@ -144,6 +158,15 @@ class RunEventsWorker:
             for _, messages in streams:
                 for message_id, fields in messages:
                     last_id = message_id
+                    payload_raw = fields.get("payload", "")
+                    payload_size = len(payload_raw) if payload_raw else 0
+                    self._logger.info(
+                        "run_worker.event_received event_id=%s run_id=%s event_type=%s payload_size=%db",
+                        fields.get("eventId", "unknown")[:8],
+                        fields.get("runId", "unknown")[:8],
+                        fields.get("eventType", "unknown"),
+                        payload_size
+                    )
                     self._process_event(fields)
 
     def _process_event(self, fields: Mapping[str, str]) -> None:
@@ -151,8 +174,14 @@ class RunEventsWorker:
         if event is None:
             return
 
+        start_time = time.perf_counter()
+        run_inputs = _extract_run_inputs(event.payload)
+        self._logger.info(
+            "run_worker.processing_start run_id=%s inputs=%d",
+            event.run_id[:8], len(run_inputs)
+        )
+
         try:
-            run_inputs = _extract_run_inputs(event.payload)
             search_client, url_resolver = _build_clients(self._search_provider, self._logger)
             _prepare_run_database(event.run_id, self._data_dir, self._logger)
             outcome = ingest_run(
@@ -165,6 +194,19 @@ class RunEventsWorker:
             )
             new_db_path = self._data_dir / "db" / "runs" / f"{event.run_id}.db"
             _update_db_pointer(new_db_path, self._data_dir, self._logger)
+            
+            duration_ms = int((time.perf_counter() - start_time) * 1000)
+            self._logger.info(
+                "run_worker.processing_complete run_id=%s issued=%d persisted=%d new=%d skipped_404=%d zero_results=%d duration_ms=%d",
+                event.run_id[:8],
+                outcome.issued_calls,
+                outcome.persisted_results,
+                outcome.new_jobs_count,
+                outcome.skipped_404,
+                len(outcome.zero_results),
+                duration_ms
+            )
+            
             self._publish_event(
                 COMPLETED_EVENT_TYPE,
                 event.run_id,
@@ -186,6 +228,11 @@ class RunEventsWorker:
                 },
             )
         except (SearchServiceError, FetcherError, TimeoutError) as error:
+            duration_ms = int((time.perf_counter() - start_time) * 1000)
+            self._logger.warning(
+                "run_worker.processing_failed run_id=%s error_code=NETWORK_ERROR error=%s duration_ms=%d",
+                event.run_id[:8], str(error)[:100], duration_ms
+            )
             self._publish_event(
                 FAILED_EVENT_TYPE,
                 event.run_id,
@@ -195,6 +242,11 @@ class RunEventsWorker:
                 },
             )
         except Exception as error:
+            duration_ms = int((time.perf_counter() - start_time) * 1000)
+            self._logger.warning(
+                "run_worker.processing_failed run_id=%s error_code=INGESTION_ERROR error=%s duration_ms=%d",
+                event.run_id[:8], str(error)[:100], duration_ms
+            )
             self._publish_event(
                 FAILED_EVENT_TYPE,
                 event.run_id,
@@ -215,19 +267,24 @@ class RunEventsWorker:
             "payload": json.dumps(event["payload"]),
         }
         self._redis.xadd(self._stream_key, fields)
+        payload_size = len(fields["payload"])
+        self._logger.info(
+            "run_worker.event_published run_id=%s event_type=%s payload_size=%db",
+            run_id[:8], event_type, payload_size
+        )
 
 
 def _build_clients(provider: str, logger: logging.Logger):
     if provider == "mock":
         return DeterministicMockSearchClient(logger=logger), DeterministicMockUrlResolver()
 
-    if provider == "google":
-        api_key = os.getenv("GOOGLE_API_KEY", "").strip()
-        search_engine_id = os.getenv("GOOGLE_SEARCH_ENGINE_ID", "").strip()
-        if not api_key or not search_engine_id:
-            raise ValueError("GOOGLE_API_KEY and GOOGLE_SEARCH_ENGINE_ID are required for google provider")
-        client = GoogleSearchClient(
-            GoogleSearchConfig(api_key=api_key, search_engine_id=search_engine_id),
+    if provider == "brave":
+        api_key = os.getenv("BRAVE_SEARCH_API_KEY", "").strip()
+        if not api_key:
+            raise ValueError("BRAVE_SEARCH_API_KEY is required for brave provider")
+        freshness = os.getenv("BRAVE_SEARCH_FRESHNESS", "pm").strip()
+        client = BraveSearchClient(
+            BraveSearchConfig(api_key=api_key, freshness=freshness),
             logger=logger,
         )
         return client, UrlResolver()
@@ -242,27 +299,44 @@ def _parse_run_requested_event(
 ) -> RequestedRunEvent | None:
     missing = [field for field in REQUIRED_EVENT_FIELDS if not fields.get(field)]
     if missing:
-        logger.warning("run_worker.invalid_event missing_fields=%s", ",".join(missing))
+        logger.warning(
+            "run_worker.event_invalid reason=missing_fields fields=%s",
+            ",".join(missing)
+        )
         return None
 
+    event_id = fields.get("eventId", "unknown")[:8]
     if fields["eventType"] != REQUESTED_EVENT_TYPE:
+        logger.debug(
+            "run_worker.event_skipped event_id=%s event_type=%s",
+            event_id, fields["eventType"]
+        )
         return None
 
     try:
         int(fields["eventVersion"])
         datetime.fromisoformat(fields["occurredAt"].replace("Z", "+00:00"))
     except ValueError:
-        logger.warning("run_worker.invalid_event invalid_metadata eventId=%s", fields.get("eventId"))
+        logger.warning(
+            "run_worker.event_invalid event_id=%s reason=invalid_metadata",
+            event_id
+        )
         return None
 
     try:
         payload = json.loads(fields["payload"])
     except json.JSONDecodeError:
-        logger.warning("run_worker.invalid_event invalid_payload eventId=%s", fields.get("eventId"))
+        logger.warning(
+            "run_worker.event_invalid event_id=%s reason=invalid_json_payload",
+            event_id
+        )
         return None
 
     if not isinstance(payload, dict):
-        logger.warning("run_worker.invalid_event payload_not_object eventId=%s", fields.get("eventId"))
+        logger.warning(
+            "run_worker.event_invalid event_id=%s reason=payload_not_object",
+            event_id
+        )
         return None
 
     return RequestedRunEvent(run_id=fields["runId"], payload=payload)

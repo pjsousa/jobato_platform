@@ -12,23 +12,23 @@ from urllib.request import Request, urlopen
 from app.schemas.results import SearchResultItem
 
 
-GOOGLE_SEARCH_URL = "https://customsearch.googleapis.com/customsearch/v1"
+BRAVE_SEARCH_URL = "https://api.search.brave.com/res/v1/web/search"
 
 
 @dataclass(frozen=True)
-class GoogleSearchConfig:
+class BraveSearchConfig:
     api_key: str
-    search_engine_id: str
+    freshness: str = "pm"
 
 
 class SearchServiceError(RuntimeError):
     pass
 
 
-class GoogleSearchClient:
+class BraveSearchClient:
     def __init__(
         self,
-        config: GoogleSearchConfig,
+        config: BraveSearchConfig,
         http_get: Callable[[str], dict[str, Any]] | None = None,
         logger: logging.Logger | None = None,
     ) -> None:
@@ -45,7 +45,7 @@ class GoogleSearchClient:
         payload = self._http_get(url)
         results = _parse_results(payload)
         self._logger.info(
-            "google_search.completed run_id=%s query=%s results=%s",
+            "brave_search.completed run_id=%s query=%s results=%s",
             run_id,
             search_query,
             len(results),
@@ -53,31 +53,45 @@ class GoogleSearchClient:
         return results
 
 
-def _build_search_url(config: GoogleSearchConfig, search_query: str) -> str:
+def _build_search_url(config: BraveSearchConfig, search_query: str) -> str:
     params = {
-        "key": config.api_key,
-        "cx": config.search_engine_id,
         "q": search_query,
     }
-    return f"{GOOGLE_SEARCH_URL}?{urlencode(params)}"
+    if config.freshness:
+        params["freshness"] = config.freshness
+    return f"{BRAVE_SEARCH_URL}?{urlencode(params)}"
 
 
 def _default_http_get(url: str) -> dict[str, Any]:
-    request = Request(url, headers={"User-Agent": "jobato/1.0"})
+    import os
+
+    api_key = os.getenv("BRAVE_SEARCH_API_KEY", "").strip()
+    if not api_key:
+        raise SearchServiceError("BRAVE_SEARCH_API_KEY environment variable is not set")
+
+    request = Request(
+        url,
+        headers={
+            "User-Agent": "jobato/1.0",
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip",
+            "X-Subscription-Token": api_key,
+        },
+    )
     try:
         with urlopen(request, timeout=10) as response:
             payload = response.read().decode("utf-8")
     except HTTPError as error:
-        raise SearchServiceError(f"Google search request failed with status {error.code}") from error
+        raise SearchServiceError(f"Brave search request failed with status {error.code}") from error
     except (TimeoutError, URLError, OSError) as error:
-        raise SearchServiceError("Google search request failed due to a network or timeout error") from error
+        raise SearchServiceError("Brave search request failed due to a network or timeout error") from error
 
     try:
         parsed = json.loads(payload)
     except json.JSONDecodeError as error:
-        raise SearchServiceError("Google search returned invalid JSON") from error
+        raise SearchServiceError("Brave search returned invalid JSON") from error
     if not isinstance(parsed, dict):
-        raise SearchServiceError("Google search returned an unexpected payload shape")
+        raise SearchServiceError("Brave search returned an unexpected payload shape")
     return parsed
 
 
@@ -94,7 +108,7 @@ class DeterministicMockSearchClient:
         normalized_query = search_query.lower()
         if " and " in normalized_query:
             self._logger.info(
-                "google_search.mock_completed run_id=%s query=%s results=%s",
+                "brave_search.mock_completed run_id=%s query=%s results=%s",
                 run_id,
                 search_query,
                 0,
@@ -110,7 +124,7 @@ class DeterministicMockSearchClient:
             display_link=domain,
         )
         self._logger.info(
-            "google_search.mock_completed run_id=%s query=%s results=%s",
+            "brave_search.mock_completed run_id=%s query=%s results=%s",
             run_id,
             search_query,
             1,
@@ -121,7 +135,10 @@ class DeterministicMockSearchClient:
 def _parse_results(payload: dict[str, Any]) -> list[SearchResultItem]:
     if not isinstance(payload, dict):
         return []
-    raw_items = payload.get("items")
+    web = payload.get("web")
+    if not isinstance(web, dict):
+        return []
+    raw_items = web.get("results")
     if not isinstance(raw_items, list):
         return []
     results: list[SearchResultItem] = []
@@ -129,9 +146,9 @@ def _parse_results(payload: dict[str, Any]) -> list[SearchResultItem]:
         if not isinstance(item, dict):
             continue
         title = str(item.get("title", ""))
-        snippet = str(item.get("snippet", ""))
-        link = str(item.get("link", ""))
-        display_link = str(item.get("displayLink", ""))
+        snippet = str(item.get("description", ""))
+        link = str(item.get("url", ""))
+        display_link = str(item.get("profile", {}).get("name", ""))
         if not display_link and link:
             display_link = _extract_domain(link)
         results.append(
